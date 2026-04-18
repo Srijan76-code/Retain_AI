@@ -10,13 +10,101 @@ from __future__ import annotations
 
 import os
 import json
-import re
-from app.graph.utils import extract_llm_text
+from pydantic import BaseModel, Field
+from typing import List, Dict, Any, Union
 from datetime import datetime
 
 from langchain_groq import ChatGroq
 from langchain_core.prompts import ChatPromptTemplate
 from app.graph.state import RetentionGraphState
+from app.graph.utils import safe_llm_invoke
+
+class ExecutiveSummary(BaseModel):
+    total_problems_identified: int
+    total_projected_retention_lift: str
+    estimated_timeline: str
+    estimated_budget: str
+    confidence_level: str
+
+class ProblemDetail(BaseModel):
+    title: str
+    description: str
+    affected_segment: str
+    current_impact: str
+
+class SolutionDetail(BaseModel):
+    title: str
+    description: str
+    framework_used: str
+    key_actions: List[str]
+
+class RetentionImpact(BaseModel):
+    estimated_lift_percent: float
+    estimated_users_retained: int
+    estimated_revenue_impact: str
+    confidence: float
+    time_to_impact: str
+
+class ImplementationStep(BaseModel):
+    step: int
+    action: str
+    owner: str
+    effort: str
+    timeline: str
+    deliverable: str
+    dependencies: List[str]
+
+class ProblemSolution(BaseModel):
+    priority: int
+    problem: ProblemDetail
+    solution: SolutionDetail
+    retention_impact: RetentionImpact
+    implementation_steps: List[ImplementationStep]
+
+class PhaseSummary(BaseModel):
+    theme: str
+    goals: List[str]
+    key_milestones: List[str]
+    expected_lift: str
+
+class Roadmap(BaseModel):
+    phase_1_30_days: PhaseSummary
+    phase_2_60_days: PhaseSummary
+    phase_3_90_days: PhaseSummary
+
+class SuccessMetric(BaseModel):
+    metric: str
+    current_value: str
+    target_value: str
+    measurement_method: str
+    review_frequency: str
+
+class RiskMitigation(BaseModel):
+    risk: str
+    probability: str
+    mitigation: str
+    contingency: str
+
+class BudgetBreakdown(BaseModel):
+    people: str
+    technology: str
+    marketing: str
+    total: str
+
+class ResourceRequirements(BaseModel):
+    team: List[str]
+    technology: List[str]
+    budget_breakdown: BudgetBreakdown
+
+class Playbook(BaseModel):
+    model_config = {"populate_by_name": True}
+    title: str
+    executive_summary: ExecutiveSummary
+    problems_and_solutions: List[ProblemSolution]
+    roadmap_30_60_90: Roadmap = Field(alias="30_60_90_roadmap")
+    success_metrics: List[SuccessMetric]
+    risks_and_mitigations: List[RiskMitigation]
+    resource_requirements: ResourceRequirements
 
 
 def execution_architect_node(state: RetentionGraphState) -> dict:
@@ -183,28 +271,28 @@ Return ONLY a valid JSON object with this exact structure:
         root_causes_str = json.dumps(verified_root_causes, indent=2)
         strategies_str = json.dumps(merged_strategies, indent=2)
 
-        response = llm.invoke(prompt.format(
-            industry=input_context.get("industry", "Unknown"),
-            business_model=input_context.get("business_model", "Unknown"),
-            company_stage=input_context.get("company_stage", "Unknown"),
-            target_churn=input_context.get("target_churn_rate", "Unknown"),
-            goal=input_context.get("goal", "Reduce churn"),
-            root_causes=root_causes_str,
-            economist=json.dumps(economist_output, indent=2)[:1500],
-            jtbd=json.dumps(jtbd_output, indent=2)[:1500],
-            growth=json.dumps(growth_output, indent=2)[:1500],
-            strategies=strategies_str,
-            lift=lift_percent,
-            simulations=json.dumps(simulations, indent=2)[:1000] if simulations else "No simulation data",
-            constraints=json.dumps(constrained_brief, indent=2)[:1000] if constrained_brief else "No constraints",
-            criticism=json.dumps(criticism, indent=2)[:500] if criticism else "No critic feedback",
-        ))
+        response = safe_llm_invoke(
+            llm, Playbook,
+            prompt.format(
+                industry=input_context.get("industry", "Unknown"),
+                business_model=input_context.get("business_model", "Unknown"),
+                company_stage=input_context.get("company_stage", "Unknown"),
+                target_churn=input_context.get("target_churn_rate", "Unknown"),
+                goal=input_context.get("goal", "Reduce churn"),
+                root_causes=root_causes_str,
+                economist=json.dumps(economist_output, indent=2)[:1500],
+                jtbd=json.dumps(jtbd_output, indent=2)[:1500],
+                growth=json.dumps(growth_output, indent=2)[:1500],
+                strategies=strategies_str,
+                lift=lift_percent,
+                simulations=json.dumps(simulations, indent=2)[:1000] if simulations else "No simulation data",
+                constraints=json.dumps(constrained_brief, indent=2)[:1000] if constrained_brief else "No constraints",
+                criticism=json.dumps(criticism, indent=2)[:500] if criticism else "No critic feedback",
+            ),
+            agent_name="ExecutionArchitect",
+        )
 
-        content = extract_llm_text(response.content)
-        content = re.sub(r'^```(?:json)?\s*', '', content)
-        content = re.sub(r'\s*```$', '', content)
-
-        playbook = json.loads(content)
+        playbook = response.model_dump(by_alias=True)
 
         # Enrich with metadata
         playbook["created_date"] = datetime.now().isoformat()

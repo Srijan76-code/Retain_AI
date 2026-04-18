@@ -47,6 +47,7 @@ def run_monte_carlo_simulation(strategies: list, roi_data: dict, iterations: int
 
     intervention_impacts = []
     roi_samples = []
+    all_impact_samples = []
 
     for strategy in strategies[:3]:  # Top 3 strategies
         expected_impact = strategy.get("expected_roi", 20)
@@ -67,13 +68,20 @@ def run_monte_carlo_simulation(strategies: list, roi_data: dict, iterations: int
             "percentile_90": round(float(np.percentile(impact_samples, 90)) * 100, 2),
         })
 
+        all_impact_samples.extend(impact_samples.tolist())
+
         # ROI sampling
         roi_samples.extend(impact_samples * 200)  # Convert lift to ROI estimate
 
     # Calculate overall metrics
-    combined_lift = np.mean(impact_samples) * 100 if len(impact_samples) > 0 else 12.0
-    ci_lower = np.percentile(impact_samples, 5) * 100 if len(impact_samples) > 0 else 8.0
-    ci_upper = np.percentile(impact_samples, 95) * 100 if len(impact_samples) > 0 else 16.0
+    if all_impact_samples:
+        combined_lift = np.mean(all_impact_samples) * 100
+        ci_lower = np.percentile(all_impact_samples, 5) * 100
+        ci_upper = np.percentile(all_impact_samples, 95) * 100
+    else:
+        combined_lift = 12.0
+        ci_lower = 8.0
+        ci_upper = 16.0
 
     return {
         "iterations": iterations,

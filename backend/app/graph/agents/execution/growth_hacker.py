@@ -8,14 +8,53 @@ Called by: strategy_pod_node
 from __future__ import annotations
 
 import os
-import json
-import re
-from typing import Any
-from app.graph.utils import extract_llm_text
+from typing import Any, List, Dict
+from pydantic import BaseModel, Field
+from app.graph.utils import safe_llm_invoke
 from langchain_groq import ChatGroq
 from langchain_core.prompts import ChatPromptTemplate
 from app.graph.state import RetentionGraphState
 
+class ProposedTactic(BaseModel):
+    name: str
+    description: str
+    target_metric: str
+    expected_lift: float
+    implementation_timeline: str
+    confidence: float = Field(default=0.8) # Provide default since it's used in calculation
+
+class ExperimentDesign(BaseModel):
+    test_name: str
+    control: str
+    variant: str
+    metric: str
+    sample_size: int
+    duration_days: int
+
+class ActivationImprovement(BaseModel):
+    focus: str
+    current_step: str
+    improvement: str
+    estimated_lift: float
+
+class ViralLoop(BaseModel):
+    loop: str
+    trigger: str
+    incentive: str
+    estimated_impact: str
+
+class SpeedToImpact(BaseModel):
+    quick_wins: List[str]
+    medium_term: List[str]
+    long_term: List[str]
+    prioritization_logic: str
+
+class GrowthHackerResult(BaseModel):
+    proposed_tactics: List[ProposedTactic]
+    experiment_designs: List[ExperimentDesign]
+    activation_improvements: List[ActivationImprovement]
+    viral_loops: List[ViralLoop]
+    speed_to_impact: SpeedToImpact
 
 def run_growth_hacker(state: RetentionGraphState) -> dict[str, Any]:
     """Generate growth-focused retention strategies using Groq."""
@@ -83,25 +122,24 @@ def run_growth_hacker(state: RetentionGraphState) -> dict[str, Any]:
             }}"""
         )
 
-        response = llm.invoke(prompt.format(
-            causes=json.dumps(verified_causes),
-            constraints=json.dumps(constrained_brief)
-        ))
+        import json
+        response = safe_llm_invoke(
+            llm, GrowthHackerResult,
+            prompt.format(causes=json.dumps(verified_causes), constraints=json.dumps(constrained_brief)),
+            agent_name="GrowthHacker",
+        )
 
-        content = extract_llm_text(response.content)
-        content = re.sub(r'^```(?:json)?\s*', '', content)
-        content = re.sub(r'\s*```$', '', content)
-        result = json.loads(content)
+        tactics_dump = [t.model_dump() for t in response.proposed_tactics]
 
         return {
             "agent": "growth_hacker",
-            "proposed_tactics": result.get("proposed_tactics", []),
-            "experiment_designs": result.get("experiment_designs", []),
-            "viral_loops": result.get("viral_loops", []),
-            "activation_improvements": result.get("activation_improvements", []),
-            "speed_to_impact": result.get("speed_to_impact", {}),
+            "proposed_tactics": tactics_dump,
+            "experiment_designs": [e.model_dump() for e in response.experiment_designs],
+            "viral_loops": [v.model_dump() for v in response.viral_loops],
+            "activation_improvements": [a.model_dump() for a in response.activation_improvements],
+            "speed_to_impact": response.speed_to_impact.model_dump(),
             "framework": "Pirate Metrics (AARRR)",
-            "confidence": _avg_confidence(result.get("proposed_tactics", [])),
+            "confidence": _avg_confidence(tactics_dump),
         }
 
     except Exception as e:

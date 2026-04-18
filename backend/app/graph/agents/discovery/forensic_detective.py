@@ -8,14 +8,17 @@ Called by: diagnosis_pod_node
 from __future__ import annotations
 
 import os
-import re
-import json
-from typing import Any
-from app.graph.utils import extract_llm_text, get_churn_column
+from typing import Any, List, Dict
+from pydantic import BaseModel, Field
+from app.graph.utils import get_churn_column, safe_llm_invoke
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.prompts import ChatPromptTemplate
 from app.graph.state import RetentionGraphState
 
+
+class DetectiveResult(BaseModel):
+    suspected_causes: List[str]
+    confidence_scores: Dict[str, float]
 
 def run_forensic_detective(state: RetentionGraphState) -> dict[str, Any]:
     """Deep forensic investigation of retention patterns."""
@@ -67,19 +70,19 @@ def run_forensic_detective(state: RetentionGraphState) -> dict[str, Any]:
             """
         )
 
-        response = llm.invoke(prompt.format(
-            churn_rate=f"{stats['churn_rate']:.1%}",
-            churn_by_channel=json.dumps(stats["churn_by_channel"]),
-            churn_by_integration=json.dumps(stats["churn_by_integration"]),
-        ))
+        import json
+        response = safe_llm_invoke(
+            llm, DetectiveResult,
+            prompt.format(
+                churn_rate=f"{stats['churn_rate']:.1%}",
+                churn_by_channel=json.dumps(stats['churn_by_channel']),
+                churn_by_integration=json.dumps(stats['churn_by_integration']),
+            ),
+            agent_name="ForensicDetective",
+        )
 
-        content = extract_llm_text(response.content)
-        content = re.sub(r'^```(?:json)?\s*', '', content)
-        content = re.sub(r'\s*```$', '', content)
-
-        result = json.loads(content)
-        suspected_causes = result.get("suspected_causes", [])
-        confidence_scores = result.get("confidence_scores", {})
+        suspected_causes = response.suspected_causes
+        confidence_scores = response.confidence_scores
 
         return {
             "agent": "forensic_detective",

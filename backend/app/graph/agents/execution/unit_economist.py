@@ -8,14 +8,47 @@ Called by: strategy_pod_node
 from __future__ import annotations
 
 import os
-import json
-import re
-from typing import Any
-from app.graph.utils import extract_llm_text
+from typing import Any, List, Dict
+from pydantic import BaseModel, Field
+from app.graph.utils import safe_llm_invoke
 from langchain_groq import ChatGroq
 from langchain_core.prompts import ChatPromptTemplate
 from app.graph.state import RetentionGraphState
 
+class ProposedInterventionUE(BaseModel):
+    intervention: str
+    confidence: float
+    estimated_cost: str
+    cost_usd: float
+    expected_roi: float
+    rationale: str
+
+class ROIProjection(BaseModel):
+    year_1_revenue_impact: float
+    implementation_cost: float
+    roi_percent: float
+    payback_months: float
+
+class CACLTVImpact(BaseModel):
+    current_ltv: float
+    projected_ltv: float
+    ltv_improvement_pct: float
+
+class CostEstimate(BaseModel):
+    implementation: float
+    ongoing_monthly: float
+    time_to_value_weeks: float
+
+class TopROIIntervention(BaseModel):
+    intervention: str
+    expected_roi: float
+
+class UnitEconomistResult(BaseModel):
+    proposed_interventions: List[ProposedInterventionUE]
+    roi_projections: Dict[str, ROIProjection]
+    cac_ltv_impact: Dict[str, CACLTVImpact]
+    cost_estimates: Dict[str, CostEstimate]
+    top_roi_intervention: TopROIIntervention
 
 def run_unit_economist(state: RetentionGraphState) -> dict[str, Any]:
     """Generate strategies optimised for unit economics using Groq."""
@@ -74,26 +107,24 @@ def run_unit_economist(state: RetentionGraphState) -> dict[str, Any]:
             }}"""
         )
 
-        response = llm.invoke(prompt.format(
-            causes=json.dumps(verified_causes),
-            ltv=ltv_proxy,
-            constraints=json.dumps(constrained_brief)
-        ))
+        import json
+        response = safe_llm_invoke(
+            llm, UnitEconomistResult,
+            prompt.format(causes=json.dumps(verified_causes), ltv=ltv_proxy, constraints=json.dumps(constrained_brief)),
+            agent_name="UnitEconomist",
+        )
 
-        content = extract_llm_text(response.content)
-        content = re.sub(r'^```(?:json)?\s*', '', content)
-        content = re.sub(r'\s*```$', '', content)
-        result = json.loads(content)
+        interventions_dump = [i.model_dump() for i in response.proposed_interventions]
 
         return {
             "agent": "unit_economist",
-            "proposed_interventions": result.get("proposed_interventions", []),
-            "roi_projections": result.get("roi_projections", {}),
-            "cac_ltv_impact": result.get("cac_ltv_impact", {}),
-            "cost_estimates": result.get("cost_estimates", {}),
-            "top_roi_intervention": result.get("top_roi_intervention", {}),
+            "proposed_interventions": interventions_dump,
+            "roi_projections": {k: v.model_dump() for k, v in response.roi_projections.items()},
+            "cac_ltv_impact": {k: v.model_dump() for k, v in response.cac_ltv_impact.items()},
+            "cost_estimates": {k: v.model_dump() for k, v in response.cost_estimates.items()},
+            "top_roi_intervention": response.top_roi_intervention.model_dump(),
             "framework": "Unit Economics / LTV-CAC",
-            "confidence": _avg_confidence(result.get("proposed_interventions", [])),
+            "confidence": _avg_confidence(interventions_dump),
         }
 
     except Exception as e:

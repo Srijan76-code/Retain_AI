@@ -10,12 +10,23 @@ from __future__ import annotations
 
 import os
 import json
-import re
-from app.graph.utils import extract_llm_text
+from pydantic import BaseModel, Field
+from typing import List, Literal
 
 from app.graph.state import RetentionGraphState
+from app.graph.utils import safe_llm_invoke
 from langchain_groq import ChatGroq
 from langchain_core.prompts import ChatPromptTemplate
+
+class CriticEvaluation(BaseModel):
+    quality_score: float = Field(description="Score from 0.0 to 1.0 reflecting strategy quality")
+    strengths: List[str]
+    weaknesses: List[str]
+    critical_feedback: List[str]
+    recommendations: List[str]
+    constraint_violations: int
+    verdict: Literal["approved", "low_lift", "violation"]
+    verdict_reason: str
 
 
 def strategy_critic_node(state: RetentionGraphState) -> dict:
@@ -72,41 +83,40 @@ Return ONLY a valid JSON object:
 }}"""
         )
 
-        response = llm.invoke(prompt.format(
-            strategies=json.dumps(merged_strategies, indent=2)[:2000],
-            causes=json.dumps(verified_causes, indent=2)[:1000],
-            lift=lift_percent,
-            constraints=json.dumps(constrained_brief, indent=2)[:1000],
-            feedback=json.dumps(human_feedback)[:500] if human_feedback else "No human feedback",
-        ))
+        evaluation = safe_llm_invoke(
+            llm, CriticEvaluation,
+            prompt.format(
+                strategies=json.dumps(merged_strategies, indent=2)[:2000],
+                causes=json.dumps(verified_causes, indent=2)[:1000],
+                lift=lift_percent,
+                constraints=json.dumps(constrained_brief, indent=2)[:1000],
+                feedback=json.dumps(human_feedback)[:500] if human_feedback else "No human feedback",
+            ),
+            agent_name="StrategyCritic",
+        )
 
-        content = extract_llm_text(response.content)
-        content = re.sub(r'^```(?:json)?\s*', '', content)
-        content = re.sub(r'\s*```$', '', content)
-        evaluation = json.loads(content)
-
-        quality_score = evaluation.get("quality_score", 0)
-        llm_verdict = evaluation.get("verdict", "low_lift")
+        quality_score = evaluation.quality_score
+        llm_verdict = evaluation.verdict
 
         # Determine final verdict (combine LLM verdict with hard thresholds)
         if llm_verdict == "approved" and quality_score >= 0.55 and lift_percent >= 8:
             critic_verdict = "approved"
-            feedback = evaluation.get("verdict_reason", "Strategy approved.")
-        elif evaluation.get("constraint_violations", 0) > 0 or llm_verdict == "violation":
+            feedback = evaluation.verdict_reason or "Strategy approved."
+        elif evaluation.constraint_violations > 0 or llm_verdict == "violation":
             critic_verdict = "violation"
-            feedback = evaluation.get("verdict_reason", f"Strategy has constraint violations.")
+            feedback = evaluation.verdict_reason or "Strategy has constraint violations."
         else:
             critic_verdict = "low_lift"
-            feedback = evaluation.get("verdict_reason", f"Lift {lift_percent}% below threshold or quality insufficient.")
+            feedback = evaluation.verdict_reason or f"Lift {lift_percent}% below threshold or quality insufficient."
 
         criticism = {
             "quality_score": round(quality_score, 3),
             "lift_assessment": f"{lift_percent}% projected lift",
-            "constraint_violations": evaluation.get("constraint_violations", 0),
-            "critical_feedback": evaluation.get("critical_feedback", []),
-            "strengths": evaluation.get("strengths", []),
-            "weaknesses": evaluation.get("weaknesses", []),
-            "recommendations": evaluation.get("recommendations", []),
+            "constraint_violations": evaluation.constraint_violations,
+            "critical_feedback": evaluation.critical_feedback,
+            "strengths": evaluation.strengths,
+            "weaknesses": evaluation.weaknesses,
+            "recommendations": evaluation.recommendations,
         }
 
         return {

@@ -10,13 +10,40 @@ from __future__ import annotations
 
 import os
 import json
-import re
-from typing import Any
-from app.graph.utils import extract_llm_text
+from typing import Any, List, Dict
+from pydantic import BaseModel, Field
 from app.graph.state import RetentionGraphState
+from app.graph.utils import safe_llm_invoke
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.prompts import ChatPromptTemplate
 
+class CounterArgument(BaseModel):
+    hypothesis: str
+    counter_argument: str
+    strength: str
+
+class AlternativeExplanation(BaseModel):
+    hypothesis: str
+    alternative: str
+    testability: str
+
+class BiasFlag(BaseModel):
+    issue: str
+    risk: str
+    recommendation: str
+
+class OverallQuality(BaseModel):
+    forensic_quality: float
+    pattern_quality: float
+    combined_confidence: float
+    recommendation: str
+
+class SkepticResult(BaseModel):
+    counter_arguments: List[CounterArgument]
+    robustness_scores: Dict[str, float]
+    alternative_explanations: List[AlternativeExplanation]
+    bias_flags: List[BiasFlag]
+    overall_quality: OverallQuality
 
 def run_professional_skeptic(
     state: RetentionGraphState,
@@ -65,26 +92,24 @@ Return as JSON:
 }}"""
         )
 
-        response = llm.invoke(skeptic_prompt.format(
-            causes=json.dumps(forensic_causes),
-            confidence=json.dumps(forensic_confidence),
-            sequences=json.dumps(pattern_sequences[:3]),
-            patterns=json.dumps([p.get("pattern", "") for p in pattern_found[:5]]),
-        ))
-
-        content = extract_llm_text(response.content)
-        content = re.sub(r'^```(?:json)?\s*', '', content)
-        content = re.sub(r'\s*```$', '', content)
-
-        llm_result = json.loads(content)
+        response = safe_llm_invoke(
+            llm, SkepticResult,
+            skeptic_prompt.format(
+                causes=json.dumps(forensic_causes),
+                confidence=json.dumps(forensic_confidence),
+                sequences=json.dumps(pattern_sequences[:3]),
+                patterns=json.dumps([p.get("pattern", "") if isinstance(p, dict) else "" for p in pattern_found[:5]]),
+            ),
+            agent_name="ProfessionalSkeptic",
+        )
 
         return {
             "agent": "professional_skeptic",
-            "counter_arguments": llm_result.get("counter_arguments", [])[:5],
-            "bias_flags": llm_result.get("bias_flags", []),
-            "robustness_scores": llm_result.get("robustness_scores", {}),
-            "alternative_explanations": llm_result.get("alternative_explanations", [])[:3],
-            "overall_quality_assessment": llm_result.get("overall_quality", {}),
+            "counter_arguments": [c.model_dump() for c in response.counter_arguments][:5],
+            "bias_flags": [b.model_dump() for b in response.bias_flags],
+            "robustness_scores": response.robustness_scores,
+            "alternative_explanations": [a.model_dump() for a in response.alternative_explanations][:3],
+            "overall_quality_assessment": response.overall_quality.model_dump(),
             "approval_status": "conditional_proceed",
         }
 

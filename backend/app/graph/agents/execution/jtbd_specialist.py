@@ -8,14 +8,42 @@ Called by: strategy_pod_node
 from __future__ import annotations
 
 import os
-import json
-import re
-from typing import Any
-from app.graph.utils import extract_llm_text
+from typing import Any, List, Literal
+from pydantic import BaseModel, Field
 from app.graph.state import RetentionGraphState
+from app.graph.utils import safe_llm_invoke
 from langchain_groq import ChatGroq
 from langchain_core.prompts import ChatPromptTemplate
 
+
+class IdentifiedJob(BaseModel):
+    job_type: str
+    description: str
+    related_cause: str
+
+class SatisfactionGap(BaseModel):
+    job: str
+    current_satisfaction: float
+    target_satisfaction: float
+    gap: float
+
+class ProposedIntervention(BaseModel):
+    intervention: str
+    job_focus: str
+    expected_impact: float
+    implementation_effort: str
+    confidence: float = Field(default=0.8) # Provide default since it's used in confidence calculation
+
+class JobPriority(BaseModel):
+    job_type: str
+    description: str
+    priority: int
+
+class JTBDResult(BaseModel):
+    identified_jobs: List[IdentifiedJob]
+    satisfaction_gaps: List[SatisfactionGap]
+    proposed_interventions: List[ProposedIntervention]
+    job_priority_ranking: List[JobPriority]
 
 def run_jtbd_specialist(state: RetentionGraphState) -> dict[str, Any]:
     """Generate strategies using the JTBD framework via Groq."""
@@ -59,24 +87,23 @@ def run_jtbd_specialist(state: RetentionGraphState) -> dict[str, Any]:
             }}"""
         )
 
-        response = llm.invoke(prompt.format(
-            causes=json.dumps(verified_causes),
-            constraints=json.dumps(constrained_brief)
-        ))
+        import json
+        response = safe_llm_invoke(
+            llm, JTBDResult,
+            prompt.format(causes=json.dumps(verified_causes), constraints=json.dumps(constrained_brief)),
+            agent_name="JTBDSpecialist",
+        )
 
-        content = extract_llm_text(response.content)
-        content = re.sub(r'^```(?:json)?\s*', '', content)
-        content = re.sub(r'\s*```$', '', content)
-        result = json.loads(content)
+        interventions_dump = [i.model_dump() for i in response.proposed_interventions]
 
         return {
             "agent": "jtbd_specialist",
-            "identified_jobs": result.get("identified_jobs", []),
-            "satisfaction_gaps": result.get("satisfaction_gaps", []),
-            "proposed_interventions": result.get("proposed_interventions", []),
-            "job_priority_ranking": result.get("job_priority_ranking", []),
+            "identified_jobs": [j.model_dump() for j in response.identified_jobs],
+            "satisfaction_gaps": [g.model_dump() for g in response.satisfaction_gaps],
+            "proposed_interventions": interventions_dump,
+            "job_priority_ranking": [r.model_dump() for r in response.job_priority_ranking],
             "framework": "Jobs-to-be-Done",
-            "confidence": _avg_confidence(result.get("proposed_interventions", [])),
+            "confidence": _avg_confidence(interventions_dump),
         }
 
     except Exception as e:

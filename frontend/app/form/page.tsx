@@ -2,6 +2,7 @@
 
 import React, { useState, useRef, useCallback } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import {
@@ -14,6 +15,7 @@ import {
   Loader2,
   ArrowRight,
 } from "lucide-react";
+import toast from "react-hot-toast";
 
 /* ─── types ────────────────────────────────────────────────────── */
 
@@ -144,6 +146,7 @@ export default function FormPage() {
   const [step, setStep] = useState(0);
   const [form, setForm] = useState<FormData>(INITIAL);
   const [submitting, setSubmitting] = useState(false);
+  const router = useRouter();
   const [maxStep, setMaxStep] = useState(0);
   const fileRef = useRef<HTMLInputElement>(null);
   const total = STEPS.length;
@@ -195,10 +198,22 @@ export default function FormPage() {
         typical_customer: form.typicalCustomer,
       },
     };
-    console.log("SUBMIT PAYLOAD:", JSON.stringify(payload, null, 2));
-    await new Promise((r) => setTimeout(r, 1500));
-    setSubmitting(false);
-    alert("Questionnaire submitted! Check the console for the payload.");
+    try {
+      sessionStorage.setItem("latest_form_payload", JSON.stringify(payload));
+      const res = await fetch("http://localhost:8000/analyze", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) throw new Error("Failed to start analysis");
+      const data = await res.json();
+      toast.success("Analysis started successfully!");
+      router.push(`/results/${data.job_id}`);
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to submit questionnaire. Please make sure backend is running.");
+      setSubmitting(false);
+    }
   };
 
   /* ── step renderers ──────────────────────────────────────────── */

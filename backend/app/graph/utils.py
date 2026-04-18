@@ -35,3 +35,44 @@ def get_churn_column(df) -> str | None:
             return c
     # Fall back to any column explicitly named is_churned or churned
     return next((c for c in churn_candidates if 'is_churn' in c.lower() or c.lower() == 'churned'), None)
+
+
+def safe_llm_invoke(llm, schema, prompt_text: str, agent_name: str = "Unknown"):
+    """Invoke LLM with structured output, falling back to raw JSON parsing.
+    
+    Strategy:
+      1. Try with_structured_output() — cleanest path (function calling)
+      2. If that returns None, fall back to raw invoke + manual JSON extraction
+      3. Validate through Pydantic either way
+    
+    This guarantees a valid Pydantic model or raises a clear exception.
+    """
+    import json
+    import re
+
+    # ── Attempt 1: Structured output (function calling) ──────────────
+    try:
+        structured_llm = llm.with_structured_output(schema)
+        result = structured_llm.invoke(prompt_text)
+        if result is not None:
+            return result
+    except Exception:
+        pass  # Fall through to raw parsing
+
+    # ── Attempt 2: Raw invoke + JSON extraction ──────────────────────
+    raw_response = llm.invoke(prompt_text)
+    content = extract_llm_text(raw_response.content)
+
+    # Strip markdown code fences
+    content = re.sub(r'^```(?:json)?\s*', '', content.strip())
+    content = re.sub(r'\s*```\s*$', '', content.strip())
+
+    try:
+        data = json.loads(content)
+    except json.JSONDecodeError as e:
+        raise ValueError(
+            f"[{agent_name}] LLM produced neither valid structured output "
+            f"nor parseable JSON. Raw content: {content[:300]}..."
+        ) from e
+
+    return schema(**data)

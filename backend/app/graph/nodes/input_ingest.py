@@ -14,8 +14,13 @@ from app.graph.state import RetentionGraphState
 
 def input_ingest_node(state: RetentionGraphState) -> dict:
     """Load CSV and normalize to standard customer schema."""
+    import os
     try:
         raw_csv_path = state.get("raw_csv_path", "")
+        # Resolve path to the backend/data directory
+        if raw_csv_path and not os.path.isabs(raw_csv_path):
+            raw_csv_path = os.path.join(os.getcwd(), "data", os.path.basename(raw_csv_path))
+
         questionnaire = state.get("questionnaire", {})
 
         # Load CSV with DuckDB (auto-detects schema)
@@ -56,6 +61,7 @@ def input_ingest_node(state: RetentionGraphState) -> dict:
         }
 
         return {
+            "raw_csv_path": raw_csv_path,  # propagate resolved absolute path to all downstream nodes
             "normalized_df": df.to_dict(orient="records"),  # serialize for state
             "input_context": input_context,
             "input_constraints": input_constraints,

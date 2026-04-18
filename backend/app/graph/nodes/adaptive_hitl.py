@@ -9,11 +9,15 @@ Adds:    human_clarification, hitl_questions
 from __future__ import annotations
 
 import os
-import json
-from app.graph.utils import extract_llm_text
+from pydantic import BaseModel, Field
+from typing import List
 from app.graph.state import RetentionGraphState
+from app.graph.utils import safe_llm_invoke
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.prompts import ChatPromptTemplate
+
+class HitlQuestions(BaseModel):
+    questions: List[str] = Field(description="2-3 specific, actionable clarification questions.")
 
 
 def adaptive_hitl_node(state: RetentionGraphState) -> dict:
@@ -45,16 +49,17 @@ def adaptive_hitl_node(state: RetentionGraphState) -> dict:
         )
 
         intervention_names = [i.get("cause", "") for i in feasible_interventions[:3]]
-        response = llm.invoke(prompt.format(
-            interventions=", ".join(intervention_names) if intervention_names else "Multiple retention strategies",
-            industry=industry,
-            size=company_size,
-        ))
+        response = safe_llm_invoke(
+            llm, HitlQuestions,
+            prompt.format(
+                interventions=", ".join(intervention_names) if intervention_names else "Multiple retention strategies",
+                industry=industry,
+                size=company_size,
+            ),
+            agent_name="AdaptiveHITL",
+        )
 
-        raw_content = extract_llm_text(response.content)
-        hitl_questions = json.loads(raw_content)
-        if not isinstance(hitl_questions, list):
-            raise ValueError("LLM did not return a list of questions")
+        hitl_questions = response.questions
 
         human_clarification = {
             "questions_asked": hitl_questions,
