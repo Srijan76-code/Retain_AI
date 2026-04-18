@@ -2,49 +2,106 @@
 Node 11: Strategy Critic
 ==========================
 Action:  Senior partner review with iteration control
-Tools:   LLM (senior partner persona)
-Adds:    critic_verdict, iteration_count
+Tools:   Groq LLM (senior partner persona)
+Adds:    critic_verdict, iteration_count, criticism, feedback
 """
 
 from __future__ import annotations
 
-from app.graph.state import RetentionGraphState
-from langchain_google_genai import ChatGoogleGenerativeAI
-from langchain_core.prompts import ChatPromptTemplate
 import os
 import json
+import re
+
+from app.graph.state import RetentionGraphState
+from langchain_groq import ChatGroq
+from langchain_core.prompts import ChatPromptTemplate
 
 
 def strategy_critic_node(state: RetentionGraphState) -> dict:
-    """Senior-partner-level review of the proposed strategy."""
+    """Senior-partner-level review of the proposed strategy using LLM."""
     try:
         merged_strategies = state.get("strategy_outputs", {}).get("merged_strategies", [])
         lift_percent = state.get("lift_percent", 0)
         iteration_count = state.get("iteration_count", 0) + 1
         constrained_brief = state.get("constrained_brief", {})
         human_feedback = state.get("human_clarification", {}).get("responses", {})
+        verified_causes = state.get("verified_root_causes", [])
 
-        # Evaluate strategy quality
-        evaluation = evaluate_strategy(merged_strategies, lift_percent, human_feedback)
+        # Use Groq LLM for real evaluation
+        llm = ChatGroq(
+            model="llama-3.3-70b-versatile",
+            groq_api_key=os.getenv("GROQ_API_KEY_2"),
+            temperature=0.1,
+        )
 
-        # Determine verdict
-        if evaluation["quality_score"] >= 0.75 and lift_percent >= 12:
+        prompt = ChatPromptTemplate.from_template(
+            """You are a senior strategy partner reviewing a retention strategy proposal.
+
+## Proposed Strategies
+{strategies}
+
+## Verified Root Causes
+{causes}
+
+## Simulation Results
+Projected Lift: {lift}%
+
+## Constraints
+{constraints}
+
+## Human Feedback
+{feedback}
+
+Evaluate this strategy critically. Consider:
+1. Does the strategy address the actual root causes?
+2. Is the projected lift realistic?
+3. Are there any constraint violations?
+4. What are the strengths and weaknesses?
+
+Return ONLY a valid JSON object:
+{{
+    "quality_score": 0.75,
+    "strengths": ["strength 1", "strength 2"],
+    "weaknesses": ["weakness 1"],
+    "critical_feedback": ["feedback 1"],
+    "recommendations": ["recommendation 1"],
+    "constraint_violations": 0,
+    "verdict": "approved|low_lift|violation",
+    "verdict_reason": "Why this verdict was chosen"
+}}"""
+        )
+
+        response = llm.invoke(prompt.format(
+            strategies=json.dumps(merged_strategies, indent=2)[:2000],
+            causes=json.dumps(verified_causes, indent=2)[:1000],
+            lift=lift_percent,
+            constraints=json.dumps(constrained_brief, indent=2)[:1000],
+            feedback=json.dumps(human_feedback)[:500] if human_feedback else "No human feedback",
+        ))
+
+        content = response.content.strip()
+        content = re.sub(r'^```(?:json)?\s*', '', content)
+        content = re.sub(r'\s*```$', '', content)
+        evaluation = json.loads(content)
+
+        quality_score = evaluation.get("quality_score", 0)
+        llm_verdict = evaluation.get("verdict", "low_lift")
+
+        # Determine final verdict (combine LLM verdict with hard thresholds)
+        if llm_verdict == "approved" and quality_score >= 0.55 and lift_percent >= 8:
             critic_verdict = "approved"
-            feedback = "Strategy meets quality and impact thresholds. Proceed to execution planning."
-        elif evaluation["constraint_violations"] > 0:
+            feedback = evaluation.get("verdict_reason", "Strategy approved.")
+        elif evaluation.get("constraint_violations", 0) > 0 or llm_verdict == "violation":
             critic_verdict = "violation"
-            feedback = f"Strategy violates {evaluation['constraint_violations']} constraint(s). Iterate on discovery."
-        elif lift_percent < 12:
-            critic_verdict = "low_lift"
-            feedback = f"Expected lift of {lift_percent}% below 12% threshold. Re-run execution agents with adjusted parameters."
+            feedback = evaluation.get("verdict_reason", f"Strategy has constraint violations.")
         else:
             critic_verdict = "low_lift"
-            feedback = "Strategy quality insufficient. Additional refinement needed."
+            feedback = evaluation.get("verdict_reason", f"Lift {lift_percent}% below threshold or quality insufficient.")
 
         criticism = {
-            "quality_score": round(evaluation["quality_score"], 3),
+            "quality_score": round(quality_score, 3),
             "lift_assessment": f"{lift_percent}% projected lift",
-            "constraint_violations": evaluation["constraint_violations"],
+            "constraint_violations": evaluation.get("constraint_violations", 0),
             "critical_feedback": evaluation.get("critical_feedback", []),
             "strengths": evaluation.get("strengths", []),
             "weaknesses": evaluation.get("weaknesses", []),
@@ -64,58 +121,7 @@ def strategy_critic_node(state: RetentionGraphState) -> dict:
             "critic_verdict": "low_lift",
             "iteration_count": state.get("iteration_count", 0) + 1,
             "criticism": {"error": str(e)},
-            "feedback": "Critique error; defaulting to re-iteration",
-            "errors": [*state.get("errors", []), f"Strategy critic error: {str(e)}"],
+            "feedback": f"Critique error: {str(e)}",
+            "errors": [f"Strategy critic error: {str(e)}"],
             "current_node": "strategy_critic",
         }
-
-
-def evaluate_strategy(strategies: list, lift_percent: float, human_feedback: dict) -> dict:
-    """Evaluate strategy quality, feasibility, and constraint satisfaction."""
-    evaluation = {
-        "quality_score": 0.0,
-        "constraint_violations": 0,
-        "strengths": [],
-        "weaknesses": [],
-        "critical_feedback": [],
-        "recommendations": [],
-    }
-
-    # Base quality from number of recommendations
-    base_quality = min(len(strategies) / 3.0, 1.0)
-
-    # Lift quality adjustment
-    lift_quality = min(lift_percent / 25, 1.0)  # 25% = 1.0
-
-    # Check for constraint violations
-    violations = 0
-    if lift_percent < 8:
-        violations += 1
-        evaluation["weaknesses"].append("Low projected lift (<8%)")
-    if len(strategies) < 1:
-        violations += 1
-        evaluation["weaknesses"].append("Insufficient strategy options")
-
-    evaluation["constraint_violations"] = violations
-
-    # Calculate composite quality score
-    quality = (base_quality * 0.4) + (lift_quality * 0.6)
-    evaluation["quality_score"] = max(0, min(quality, 1.0))
-
-    # Add feedback
-    if len(strategies) > 0:
-        evaluation["strengths"].append(f"{len(strategies)} well-researched intervention options")
-    if lift_percent >= 15:
-        evaluation["strengths"].append(f"Strong projected impact ({lift_percent}%)")
-    if lift_percent < 12:
-        evaluation["weaknesses"].append(f"Conservative impact estimate ({lift_percent}%)")
-
-    # Recommendations
-    if len(strategies) == 0:
-        evaluation["recommendations"].append("Return to discovery phase for additional hypothesis generation")
-    if lift_percent < 12:
-        evaluation["recommendations"].append("Consider increasing scope or combining multiple tactics")
-    if quality > 0.75:
-        evaluation["recommendations"].append("Prioritize quick-win tactics for immediate momentum")
-
-    return evaluation

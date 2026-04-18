@@ -1,14 +1,20 @@
 """
 Discovery Agent: Professional Skeptic
 =======================================
-Challenges assumptions and stress-tests hypotheses.
+Challenges assumptions and stress-tests hypotheses using LLM-powered
+adversarial reasoning.
 Called by: diagnosis_pod_node
 """
 
 from __future__ import annotations
 
+import os
+import json
+import re
 from typing import Any
 from app.graph.state import RetentionGraphState
+from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_core.prompts import ChatPromptTemplate
 
 
 def run_professional_skeptic(
@@ -16,100 +22,73 @@ def run_professional_skeptic(
     forensic_findings: dict[str, Any],
     pattern_findings: dict[str, Any],
 ) -> dict[str, Any]:
-    """Adversarial review of hypotheses and findings."""
+    """Adversarial review of hypotheses and findings using LLM reasoning."""
     try:
-        counter_arguments = []
-        bias_flags = []
-        robustness_scores = {}
-        alternative_explanations = []
-
-        # Extract claims from both agents
         forensic_causes = forensic_findings.get("suspected_causes", [])
         forensic_confidence = forensic_findings.get("confidence_scores", {})
-
         pattern_sequences = pattern_findings.get("churn_sequences", [])
         pattern_found = pattern_findings.get("patterns_found", [])
 
-        # 1. Challenge each forensic hypothesis
-        for cause in forensic_causes:
-            confidence = forensic_confidence.get(cause, 0.5)
+        llm = ChatGoogleGenerativeAI(
+            model="gemini-3-flash-preview",
+            google_api_key=os.getenv("GOOGLE_API_KEY_1"),
+            temperature=0.4,
+        )
 
-            # Check for confounding variables
-            bias_flags.append({
-                "issue": f"Potential confounding in '{cause}'",
-                "risk": "medium" if confidence > 0.7 else "low",
-                "recommendation": "Control for alternative causes",
-            })
+        skeptic_prompt = ChatPromptTemplate.from_template(
+            """You are a Professional Skeptic reviewing churn analysis findings.
+Your job is to challenge assumptions, find flaws, and stress-test hypotheses.
 
-            # Robustness based on sample size and consistency
-            # With 300 customers and 34% churn, we have decent sample size
-            robustness = min(0.95, max(0.65, confidence + 0.1))  # boost robustness with adequate sample
-            robustness_scores[cause] = round(robustness, 3)
+## Forensic Findings
+Suspected causes: {causes}
+Confidence scores: {confidence}
 
-            # Generate counter-argument
-            counter_arguments.append({
-                "hypothesis": cause,
-                "counter_argument": f"This may be correlation, not causation",
-                "strength": "medium",
-            })
+## Pattern Findings
+Churn sequences: {sequences}
+Patterns found: {patterns}
 
-        # 2. Check for survivorship bias
-        cohorts = state.get("behavior_cohorts", [])
-        if cohorts:
-            bias_flags.append({
-                "issue": "Possible survivorship bias",
-                "description": "Only analyzing active users; churned users not represented",
-                "impact": "High",
-            })
+For EACH suspected cause, provide:
+1. A specific counter-argument (not generic — reference the actual cause)
+2. A robustness score (0.0-1.0) based on how well-supported the hypothesis is
+3. One alternative explanation
 
-        # 3. Check pattern robustness
-        for sequence in pattern_sequences[:2]:
-            seq_text = sequence.get("sequence", "")
-            prob = sequence.get("probability", 0.5)
+Also flag any cognitive biases (confirmation bias, survivorship bias, overfitting).
 
-            if prob > 0.75:
-                bias_flags.append({
-                    "issue": f"High-probability sequence may be overfitted: {seq_text}",
-                    "risk": "medium",
-                })
+Return as JSON:
+{{
+  "counter_arguments": [{{"hypothesis": "...", "counter_argument": "...", "strength": "low|medium|high"}}],
+  "robustness_scores": {{"cause_name": 0.XX}},
+  "alternative_explanations": [{{"hypothesis": "...", "alternative": "...", "testability": "low|medium|high"}}],
+  "bias_flags": [{{"issue": "...", "risk": "low|medium|high", "recommendation": "..."}}],
+  "overall_quality": {{"forensic_quality": 0.XX, "pattern_quality": 0.XX, "combined_confidence": 0.XX, "recommendation": "..."}}
+}}"""
+        )
 
-            # Alternative explanation
-            alternative_explanations.append({
-                "sequence": seq_text,
-                "alternative": f"This pattern might be driven by external market factors",
-                "testability": "high",
-            })
+        response = llm.invoke(skeptic_prompt.format(
+            causes=json.dumps(forensic_causes),
+            confidence=json.dumps(forensic_confidence),
+            sequences=json.dumps(pattern_sequences[:3]),
+            patterns=json.dumps([p.get("pattern", "") for p in pattern_found[:5]]),
+        ))
 
-        # 4. Overall assessment
-        overall_quality = {
-            "forensic_quality": 0.65,
-            "pattern_quality": 0.72,
-            "combined_confidence": 0.68,
-            "recommendation": "Proceed with hypothesis validation; be cautious of confounds",
-        }
+        content = response.content.strip()
+        content = re.sub(r'^```(?:json)?\s*', '', content)
+        content = re.sub(r'\s*```$', '', content)
+
+        llm_result = json.loads(content)
 
         return {
             "agent": "professional_skeptic",
-            "counter_arguments": counter_arguments[:5],
-            "bias_flags": bias_flags,
-            "robustness_scores": robustness_scores,
-            "alternative_explanations": alternative_explanations[:3],
-            "overall_quality_assessment": overall_quality,
+            "counter_arguments": llm_result.get("counter_arguments", [])[:5],
+            "bias_flags": llm_result.get("bias_flags", []),
+            "robustness_scores": llm_result.get("robustness_scores", {}),
+            "alternative_explanations": llm_result.get("alternative_explanations", [])[:3],
+            "overall_quality_assessment": llm_result.get("overall_quality", {}),
             "approval_status": "conditional_proceed",
         }
 
     except Exception as e:
         return {
             "agent": "professional_skeptic",
-            "counter_arguments": [
-                {
-                    "hypothesis": "generic_hypothesis",
-                    "counter_argument": "Insufficient data for robust analysis",
-                    "strength": "low",
-                }
-            ],
-            "bias_flags": [],
-            "robustness_scores": {},
-            "alternative_explanations": [],
             "error": str(e),
         }

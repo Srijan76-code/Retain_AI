@@ -1,106 +1,110 @@
 """
 Execution Agent: Growth Hacker
 ================================
-Applies growth frameworks and tactics.
+Applies growth frameworks and tactics using Groq (Llama-3).
 Called by: strategy_pod_node
 """
 
 from __future__ import annotations
 
+import os
+import json
+import re
 from typing import Any
+from langchain_groq import ChatGroq
+from langchain_core.prompts import ChatPromptTemplate
 from app.graph.state import RetentionGraphState
 
 
 def run_growth_hacker(state: RetentionGraphState) -> dict[str, Any]:
-    """Generate growth-focused retention strategies."""
+    """Generate growth-focused retention strategies using Groq."""
     try:
         verified_causes = state.get("verified_root_causes", [])
         constrained_brief = state.get("constrained_brief", {})
-        feasible_interventions = constrained_brief.get("feasible_interventions", [])
 
-        proposed_tactics = []
-        experiment_designs = []
-        activation_improvements = []
-        viral_loops = []
+        llm = ChatGroq(
+            model="llama-3.3-70b-versatile",
+            groq_api_key=os.getenv("GROQ_API_KEY_2"),
+            temperature=0.6,
+        )
 
-        # 1. Design activation improvement tactics
-        if feasible_interventions:
-            for intervention in feasible_interventions[:2]:
-                cause = intervention.get("cause", "")
-                confidence = intervention.get("confidence", 0)
+        prompt = ChatPromptTemplate.from_template(
+            """As a Growth Hacker, design high-impact activation and retention experiments for a B2B SaaS product.
+            
+            Verified Causes of Churn: {causes}
+            Constraints: {constraints}
+            
+            Focus on the Pirate Metrics (AARRR) framework - specifically Activation and Retention loops.
+            
+            Return ONLY a valid JSON object. No other text. Use this structure:
+            {{
+                "proposed_tactics": [
+                    {{
+                        "name": "Activation boost: X",
+                        "description": "...",
+                        "target_metric": "Day-30 activation rate",
+                        "expected_lift": 15.5,
+                        "implementation_timeline": "2-3 weeks"
+                    }}
+                ],
+                "experiment_designs": [
+                    {{
+                        "test_name": "Test_X",
+                        "control": "Current experience",
+                        "variant": "Enhanced workflow",
+                        "metric": "7-day retention",
+                        "sample_size": 1000,
+                        "duration_days": 14
+                    }}
+                ],
+                "activation_improvements": [
+                    {{
+                        "focus": "Onboarding",
+                        "current_step": "...",
+                        "improvement": "...",
+                        "estimated_lift": 12.0
+                    }}
+                ],
+                "viral_loops": [
+                    {{
+                        "loop": "Engagement loop: ...",
+                        "trigger": "...",
+                        "incentive": "...",
+                        "estimated_impact": "..."
+                    }}
+                ],
+                "speed_to_impact": {{
+                    "quick_wins": [...],
+                    "medium_term": [...],
+                    "long_term": [],
+                    "prioritization_logic": "..."
+                }}
+            }}"""
+        )
 
-                # Activation tactic
-                tactic = {
-                    "name": f"Activation boost: {cause}",
-                    "description": f"Improve {cause.lower()} within first 30 days",
-                    "target_metric": "Day-30 activation rate",
-                    "expected_lift": round(confidence * 20, 1),
-                    "implementation_timeline": "2-3 weeks",
-                }
-                proposed_tactics.append(tactic)
+        response = llm.invoke(prompt.format(
+            causes=json.dumps(verified_causes),
+            constraints=json.dumps(constrained_brief)
+        ))
 
-                # A/B test design
-                experiment = {
-                    "test_name": f"Test_{cause.replace(' ', '_')}",
-                    "control": "Current experience",
-                    "variant": f"Enhanced {cause.lower()}",
-                    "metric": "7-day retention",
-                    "sample_size": 1000,
-                    "duration_days": 14,
-                }
-                experiment_designs.append(experiment)
-
-                # Activation improvement
-                improvement = {
-                    "focus": "Onboarding",
-                    "current_step": f"Baseline {cause}",
-                    "improvement": f"Guided {cause.lower()} workflow",
-                    "estimated_lift": round(confidence * 15, 1),
-                }
-                activation_improvements.append(improvement)
-
-        # 2. Identify viral/retention loops
-        viral_loops = [
-            {
-                "loop": "Engagement loop: Use → Invite → Collaborator → Retention",
-                "trigger": "First collaboration milestone",
-                "incentive": "Unlock advanced features",
-                "estimated_impact": "5-10% retention lift",
-            },
-            {
-                "loop": "Value reinforcement: Achieve goal → See results → Renew subscription",
-                "trigger": "Goal completion",
-                "incentive": "Exclusive insights",
-                "estimated_impact": "8-12% retention lift",
-            },
-        ]
-
-        # 3. Speed-to-impact ranking
-        speed_to_impact = {
-            "quick_wins": proposed_tactics[:1],
-            "medium_term": proposed_tactics[1:2],
-            "long_term": [],
-            "prioritization_logic": "Combination of implementation speed and expected impact",
-        }
+        content = response.content.strip()
+        content = re.sub(r'^```(?:json)?\s*', '', content)
+        content = re.sub(r'\s*```$', '', content)
+        result = json.loads(content)
 
         return {
             "agent": "growth_hacker",
-            "proposed_tactics": proposed_tactics,
-            "experiment_designs": experiment_designs,
-            "viral_loops": viral_loops,
-            "activation_improvements": activation_improvements,
-            "speed_to_impact": speed_to_impact,
+            "proposed_tactics": result.get("proposed_tactics", []),
+            "experiment_designs": result.get("experiment_designs", []),
+            "viral_loops": result.get("viral_loops", []),
+            "activation_improvements": result.get("activation_improvements", []),
+            "speed_to_impact": result.get("speed_to_impact", {}),
             "framework": "Pirate Metrics (AARRR)",
-            "confidence": 0.70,
+            "confidence": 0.75,
         }
 
     except Exception as e:
         return {
             "agent": "growth_hacker",
-            "proposed_tactics": [],
-            "experiment_designs": [],
-            "viral_loops": [],
-            "activation_improvements": [],
-            "speed_to_impact": {},
             "error": str(e),
         }

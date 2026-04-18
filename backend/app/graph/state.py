@@ -7,8 +7,14 @@ Add new keys as nodes produce artefacts.
 
 from __future__ import annotations
 
-from typing import Any, Optional
+import operator
+from typing import Any, Annotated
 from typing_extensions import TypedDict
+
+
+def _last_value(a, b):
+    """Reducer that keeps the latest value (for parallel writes to same key)."""
+    return b
 
 
 class RetentionGraphState(TypedDict, total=False):
@@ -80,12 +86,16 @@ class RetentionGraphState(TypedDict, total=False):
     # ── Node 11: Strategy Critic ─────────────────────────────────────
     critic_verdict: str  # "approved" | "low_lift" | "violation"
     iteration_count: int
+    criticism: dict[str, Any]
+    feedback: str
 
     # ── Node 12: Execution Architect ─────────────────────────────────
     final_playbook: dict[str, Any]
+    playbook_status: str
 
     # ── Metadata / Control ───────────────────────────────────────────
-    errors: list[str]
-    current_node: str
+    # Annotated with reducers so parallel nodes can write without conflict
+    errors: Annotated[list[str], operator.add]
+    current_node: Annotated[str, _last_value]
     retry_count: int
     discovery_attempts: int

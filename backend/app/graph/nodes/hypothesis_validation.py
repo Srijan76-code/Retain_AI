@@ -30,9 +30,9 @@ def hypothesis_validation_node(state: RetentionGraphState) -> dict:
             robustness = robustness_scores.get(cause, 0.5)
 
             # Hypothesis is "verified" if:
-            # - Confidence > 0.65 AND
-            # - Robustness > 0.50
-            if confidence > 0.65 and robustness > 0.50:
+            # - Confidence > 0.50 AND
+            # - Robustness > 0.35
+            if confidence > 0.50 and robustness > 0.35:
                 verified_root_causes.append({
                     "cause": cause,
                     "confidence": round(confidence, 3),
@@ -42,7 +42,7 @@ def hypothesis_validation_node(state: RetentionGraphState) -> dict:
                     "recommendation": "Proceed to constraint-aware strategy design",
                 })
                 hypothesis_status = "verified"
-            elif confidence > 0.50:
+            elif confidence > 0.35:
                 verified_root_causes.append({
                     "cause": cause,
                     "confidence": round(confidence, 3),
@@ -69,7 +69,6 @@ def hypothesis_validation_node(state: RetentionGraphState) -> dict:
         return {
             "hypothesis_status": hypothesis_status,
             "verified_root_causes": verified_root_causes,
-            "discovery_attempts": state.get("discovery_attempts", 0) + 1,
             "validation_metrics": {
                 "hypotheses_tested": len(merged_hypotheses),
                 "hypotheses_verified": len([h for h in verified_root_causes if "Strong" in h.get("evidence", "")]),
@@ -88,7 +87,6 @@ def hypothesis_validation_node(state: RetentionGraphState) -> dict:
                     "evidence": "Default pattern",
                 }
             ],
-            "discovery_attempts": state.get("discovery_attempts", 0) + 1,
             "errors": [*state.get("errors", []), f"Hypothesis validation error: {str(e)}"],
             "current_node": "hypothesis_validation",
         }

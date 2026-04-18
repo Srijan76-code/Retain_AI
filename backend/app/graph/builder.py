@@ -1,30 +1,26 @@
 """
-Graph Builder — Wires all 12 nodes + conditional edges into a LangGraph.
+Graph Builder — Wires all nodes + conditional edges into a LangGraph.
 =========================================================================
-This is the single source of truth for the pipeline topology.
-Matches the Excalidraw diagram exactly.
+Uses LangGraph's native parallel execution for Discovery and Strategy pods.
 
 Flow:
-  Input → Node 1 → Node 2 ─┬─ Clean ──→ Node 3 → Node 4 → Node 5 (Diagnosis Pod)
-                             │                                  ↓
-                             └─ Score < T → Retry → Node 1     Node 5 spawns:
-                                                                 • Forensic Detective
-                                                                 • Pattern Matcher
-                                                                 • Professional Skeptic
-                                                                  ↓
-                                                          Node 6 (Hypo. Validate)
-                                                           ├─ Verified → Node 7 → Node 8 → Node 9 (Strategy Pod)
-                                                           └─ Weak     → Node 5 (loop back)
-                                                                                      ↓
-                                                                               Node 9 spawns:
-                                                                                 • Unit Economist
-                                                                                 • JTBD Specialist
-                                                                                 • Growth Hacker
-                                                                                  ↓
-                                                                            Node 10 → Node 11 (Critic)
-                                                                                       ├─ Approved    → Node 12 → END
-                                                                                       ├─ Low Lift    → Node 9 (loop back)
-                                                                                       └─ Fail 3+     → Node 5 (loop back)
+  Input → Node 1 → Node 2 ─┬─ Clean ──→ Node 3 → Node 4 ─┬─→ Forensic Detective ─┐
+                             │                               └─→ Pattern Matcher ────┤
+                             └─ Score < T → Retry → Node 1                           ↓
+                                                                              Diagnosis Merge
+                                                                              (+ Skeptic)
+                                                                                    ↓
+                                                                            Node 6 (Hypo. Validate)
+                                                                             ├─ Verified → Node 7 → Node 8 ─┬─→ Unit Economist ──┐
+                                                                             └─ Weak     → loop back         ├─→ JTBD Specialist ─┤
+                                                                                                              └─→ Growth Hacker ──┤
+                                                                                                                                   ↓
+                                                                                                                            Strategy Merge
+                                                                                                                                   ↓
+                                                                                                                        Node 10 → Node 11 (Critic)
+                                                                                                                                   ├ Approved → Node 12 → END
+                                                                                                                                   ├ Low Lift → loop back (exec)
+                                                                                                                                   └ Fail 3+  → loop back (disc)
 """
 
 from __future__ import annotations
@@ -43,23 +39,32 @@ from app.graph.nodes import (
     data_audit_node,
     feature_engineering_node,
     behavioral_map_node,
-    diagnosis_pod_node,
     hypothesis_validation_node,
     constraint_add_node,
     adaptive_hitl_node,
-    strategy_pod_node,
     simulation_node,
     strategy_critic_node,
     execution_architect_node,
     retry_handler_node,
+    # Discovery parallel nodes
+    forensic_detective_node,
+    pattern_matcher_node,
+    diagnosis_merge_node,
+    # Execution parallel nodes
+    unit_economist_node,
+    jtbd_specialist_node,
+    growth_hacker_node,
+    strategy_merge_node,
 )
 
 
 def build_retention_graph() -> StateGraph:
     """
-    Construct and compile the full 12-node retention analysis graph.
+    Construct and compile the full retention analysis graph.
 
-    Returns a compiled LangGraph ready to `.invoke()` or `.stream()`.
+    Uses LangGraph native fan-out/fan-in for parallel agent execution:
+    - Discovery Pod: forensic_detective + pattern_matcher run in parallel → diagnosis_merge
+    - Strategy Pod:  unit_economist + jtbd_specialist + growth_hacker run in parallel → strategy_merge
     """
     graph = StateGraph(RetentionGraphState)
 
@@ -69,11 +74,22 @@ def build_retention_graph() -> StateGraph:
     graph.add_node("retry_handler", retry_handler_node)
     graph.add_node("feature_engineering", feature_engineering_node)
     graph.add_node("behavioral_map", behavioral_map_node)
-    graph.add_node("diagnosis_pod", diagnosis_pod_node)
+
+    # Discovery Agent nodes (parallel)
+    graph.add_node("forensic_detective", forensic_detective_node)
+    graph.add_node("pattern_matcher", pattern_matcher_node)
+    graph.add_node("diagnosis_merge", diagnosis_merge_node)
+
     graph.add_node("hypothesis_validation", hypothesis_validation_node)
     graph.add_node("constraint_add", constraint_add_node)
     graph.add_node("adaptive_hitl", adaptive_hitl_node)
-    graph.add_node("strategy_pod", strategy_pod_node)
+
+    # Execution Agent nodes (parallel)
+    graph.add_node("unit_economist", unit_economist_node)
+    graph.add_node("jtbd_specialist", jtbd_specialist_node)
+    graph.add_node("growth_hacker", growth_hacker_node)
+    graph.add_node("strategy_merge", strategy_merge_node)
+
     graph.add_node("simulation", simulation_node)
     graph.add_node("strategy_critic", strategy_critic_node)
     graph.add_node("execution_architect", execution_architect_node)
@@ -94,7 +110,7 @@ def build_retention_graph() -> StateGraph:
         },
     )
 
-    # Retry loops back to input ingest, or ends if max retries exceeded
+    # Retry loops back or ends
     graph.add_conditional_edges(
         "retry_handler",
         route_after_retry,
@@ -104,12 +120,20 @@ def build_retention_graph() -> StateGraph:
         },
     )
 
-    # Node 3 → Node 4 → Node 5
+    # Node 3 → Node 4
     graph.add_edge("feature_engineering", "behavioral_map")
-    graph.add_edge("behavioral_map", "diagnosis_pod")
 
-    # Node 5 → Node 6
-    graph.add_edge("diagnosis_pod", "hypothesis_validation")
+    # ── Discovery Pod: Fan-out (parallel) ────────────────────────────
+    # behavioral_map fans out to forensic_detective AND pattern_matcher
+    graph.add_edge("behavioral_map", "forensic_detective")
+    graph.add_edge("behavioral_map", "pattern_matcher")
+
+    # Both fan-in to diagnosis_merge
+    graph.add_edge("forensic_detective", "diagnosis_merge")
+    graph.add_edge("pattern_matcher", "diagnosis_merge")
+
+    # Diagnosis merge → hypothesis validation
+    graph.add_edge("diagnosis_merge", "hypothesis_validation")
 
     # Node 6 → conditional: verified vs weak proof
     graph.add_conditional_edges(
@@ -117,17 +141,27 @@ def build_retention_graph() -> StateGraph:
         route_after_hypothesis_validation,
         {
             "constraint_add": "constraint_add",
-            "diagnosis_pod": "diagnosis_pod",  # loop back to discovery
-            END: END,                           # give up after max attempts
+            "diagnosis_pod": "behavioral_map",  # loop back → re-fans-out to both discovery agents
+            END: END,
         },
     )
 
-    # Node 7 → Node 8 → Node 9
+    # Node 7 → Node 8
     graph.add_edge("constraint_add", "adaptive_hitl")
-    graph.add_edge("adaptive_hitl", "strategy_pod")
 
-    # Node 9 → Node 10 → Node 11
-    graph.add_edge("strategy_pod", "simulation")
+    # ── Strategy Pod: Fan-out (parallel) ─────────────────────────────
+    # adaptive_hitl fans out to all three execution agents
+    graph.add_edge("adaptive_hitl", "unit_economist")
+    graph.add_edge("adaptive_hitl", "jtbd_specialist")
+    graph.add_edge("adaptive_hitl", "growth_hacker")
+
+    # All three fan-in to strategy_merge
+    graph.add_edge("unit_economist", "strategy_merge")
+    graph.add_edge("jtbd_specialist", "strategy_merge")
+    graph.add_edge("growth_hacker", "strategy_merge")
+
+    # Strategy merge → simulation → critic
+    graph.add_edge("strategy_merge", "simulation")
     graph.add_edge("simulation", "strategy_critic")
 
     # Node 11 → conditional: approved vs low-lift vs failure
@@ -136,13 +170,13 @@ def build_retention_graph() -> StateGraph:
         route_after_strategy_critic,
         {
             "execution_architect": "execution_architect",
-            "strategy_pod": "strategy_pod",    # low lift → re-run execution agents
-            "diagnosis_pod": "diagnosis_pod",  # 3+ failures → back to discovery
+            "strategy_pod": "adaptive_hitl",        # low lift → re-fans-out to all 3 execution agents
+            "diagnosis_pod": "behavioral_map",       # 3+ failures → re-fans-out to both discovery agents
         },
     )
 
     # Node 12 → END
     graph.add_edge("execution_architect", END)
 
-    # ── Compile (no interrupt for API mode; add interrupt_before=["adaptive_hitl"] when HITL is wired up) ──
+    # ── Compile ──────────────────────────────────────────────────────
     return graph.compile()

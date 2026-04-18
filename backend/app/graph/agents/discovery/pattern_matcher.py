@@ -1,106 +1,84 @@
 """
 Discovery Agent: Pattern Matcher
 ==================================
-Identifies recurring patterns and user segments.
+Identifies recurring patterns and user segments using Gemini.
 Called by: diagnosis_pod_node
 """
 
 from __future__ import annotations
 
+import os
+import json
+import re
 from typing import Any
 from app.graph.state import RetentionGraphState
+from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_core.prompts import ChatPromptTemplate
 
 
 def run_pattern_matcher(state: RetentionGraphState) -> dict[str, Any]:
-    """Discover recurring retention/churn patterns via clustering."""
+    """Discover recurring retention/churn patterns via LLM analysis."""
     try:
         feature_store = state.get("feature_store", {})
         behavior_cohorts = state.get("behavior_cohorts", [])
 
-        patterns_found = []
-        user_segments = []
-        churn_sequences = []
+        llm = ChatGoogleGenerativeAI(
+            model="gemini-2.5-flash",
+            google_api_key=os.getenv("GOOGLE_API_KEY_2"),
+            temperature=0.2,
+        )
 
-        # 1. Identify behavior patterns from cohorts
-        if behavior_cohorts:
-            for cohort in behavior_cohorts:
-                cohort_id = cohort.get("cohort_id", "unknown")
-                retention = cohort.get("retention_rate", 0)
-                size = cohort.get("size", 0)
+        prompt = ChatPromptTemplate.from_template(
+            """Analyze these user behavior cohorts and features to identify recurring churn patterns and segments.
+            
+            Behavior Cohorts: {cohorts}
+            Feature Store Data: {features}
+            
+            Identify:
+            1. High-risk user segments.
+            2. Feature-based patterns (e.g., specific feature adoption gaps).
+            3. Common "churn sequences" (steps users take before leaving).
+            
+            Return ONLY a valid JSON object. No other text. Use this structure:
+            {{
+                "patterns_found": [
+                    {{"pattern": "pattern_name", "churn_risk": "high/med/low", "affected_users": 100, "description": "..."}}
+                ],
+                "user_segments": [
+                    {{"segment_id": "...", "size": 100, "retention_rate": 0.8, "characteristics": "..."}}
+                ],
+                "topic_clusters": [
+                    {{"topic": "...", "cluster_size": 10}}
+                ],
+                "churn_sequences": [
+                    {{"sequence": "step1 -> step2 -> churn", "probability": 0.85}}
+                ],
+                "pattern_confidence": 0.85
+            }}"""
+        )
 
-                # Determine churn risk pattern
-                if retention < 0.5:
-                    risk = "high_churn_risk"
-                elif retention < 0.8:
-                    risk = "moderate_churn_risk"
-                else:
-                    risk = "low_churn_risk"
+        response = llm.invoke(prompt.format(
+            cohorts=json.dumps(behavior_cohorts),
+            features=json.dumps(feature_store)
+        ))
 
-                patterns_found.append({
-                    "pattern": f"{cohort_id}_pattern",
-                    "churn_risk": risk,
-                    "affected_users": size,
-                })
+        content = response.content.strip()
+        content = re.sub(r'^```(?:json)?\s*', '', content)
+        content = re.sub(r'\s*```$', '', content)
 
-                user_segments.append({
-                    "segment_id": cohort_id,
-                    "size": size,
-                    "retention_rate": retention,
-                    "characteristics": cohort.get("characteristics", ""),
-                })
-
-        # 2. Extract feature-based patterns
-        velocity_metrics = feature_store.get("velocity_metrics", {})
-
-        if velocity_metrics:
-            for metric_name, velocity_val in velocity_metrics.items():
-                if velocity_val < 0:
-                    patterns_found.append({
-                        "pattern": f"declining_{metric_name}",
-                        "description": "Decreasing engagement over time",
-                        "severity": "high",
-                    })
-
-        # 3. Infer churn sequences (typical progression)
-        churn_sequences = [
-            {
-                "sequence": "high_inactivity -> support_tickets_decrease -> churn",
-                "probability": 0.75,
-            },
-            {
-                "sequence": "feature_adoption_lag -> limited_usage -> disengagement",
-                "probability": 0.65,
-            },
-            {
-                "sequence": "price_sensitivity_signal -> product_downgrade_inquiry -> churn",
-                "probability": 0.58,
-            },
-        ]
+        result = json.loads(content)
 
         return {
             "agent": "pattern_matcher",
-            "patterns_found": patterns_found,
-            "user_segments": user_segments,
-            "topic_clusters": [
-                {"topic": "low_engagement", "cluster_size": len(behavior_cohorts)},
-                {"topic": "feature_adoption_gap", "cluster_size": max(1, len(behavior_cohorts) // 2)},
-            ],
-            "churn_sequences": churn_sequences,
-            "pattern_confidence": 0.72,
+            "patterns_found": result.get("patterns_found", []),
+            "user_segments": result.get("user_segments", []),
+            "topic_clusters": result.get("topic_clusters", []),
+            "churn_sequences": result.get("churn_sequences", []),
+            "pattern_confidence": result.get("pattern_confidence", 0.72),
         }
 
     except Exception as e:
         return {
             "agent": "pattern_matcher",
-            "patterns_found": [
-                {
-                    "pattern": "generic_churn_pattern",
-                    "description": "Default pattern when analysis fails",
-                    "severity": "medium",
-                }
-            ],
-            "user_segments": [],
-            "topic_clusters": [],
-            "churn_sequences": [],
             "error": str(e),
         }

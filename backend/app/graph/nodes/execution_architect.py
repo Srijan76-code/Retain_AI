@@ -1,196 +1,225 @@
 """
 Node 12: Execution Architect
 ===============================
-Action:  Generate 30/60/90-day roadmap
-Tools:   Template generation
+Action:  Generate LLM-powered final playbook from real pipeline data
+Tools:   Groq LLM (Llama 3.3 70B)
 Adds:    final_playbook
 """
 
 from __future__ import annotations
 
+import os
+import json
+import re
+from datetime import datetime
+
+from langchain_groq import ChatGroq
+from langchain_core.prompts import ChatPromptTemplate
 from app.graph.state import RetentionGraphState
-from datetime import datetime, timedelta
 
 
 def execution_architect_node(state: RetentionGraphState) -> dict:
-    """Produce the final execution playbook with 30/60/90-day roadmap."""
+    """Produce the final execution playbook using LLM with real pipeline data."""
     try:
+        # ── Gather all real data from the pipeline ───────────────────────
+        verified_root_causes = state.get("verified_root_causes", [])
         merged_strategies = state.get("strategy_outputs", {}).get("merged_strategies", [])
-        lift_percent = state.get("lift_percent", 15.0)
+        lift_percent = state.get("lift_percent", 0)
         input_context = state.get("input_context", {})
+        constrained_brief = state.get("constrained_brief", {})
+        simulations = state.get("simulations", {})
+        criticism = state.get("criticism", {})
 
-        # Generate 30/60/90 day roadmap
-        roadmap = generate_roadmap(merged_strategies, lift_percent)
+        # Strategy agent outputs
+        economist_output = state.get("unit_economist_output", {})
+        jtbd_output = state.get("jtbd_specialist_output", {})
+        growth_output = state.get("growth_hacker_output", {})
 
-        # Create final playbook
-        final_playbook = {
-            "title": "Retention Optimization Playbook",
-            "created_date": datetime.now().isoformat(),
-            "company": input_context.get("industry", "SaaS"),
-            "size": input_context.get("company_size", "Unknown"),
-            "estimated_total_lift": round(lift_percent, 1),
-            "confidence_level": "High" if lift_percent > 15 else "Medium",
+        # ── Initialize Groq LLM ─────────────────────────────────────────
+        llm = ChatGroq(
+            model="llama-3.3-70b-versatile",
+            groq_api_key=os.getenv("GROQ_API_KEY_3"),
+            temperature=0.3,
+        )
 
-            "executive_summary": {
-                "objective": f"Improve retention by {round(lift_percent, 1)}% over 90 days",
-                "key_strategies": [s.get("recommendation", "") for s in merged_strategies[:3]],
-                "expected_impact": f"${round(lift_percent * 10000, 0):,.0f} incremental ARR",
-                "resource_requirement": determine_resource_requirement(merged_strategies),
-            },
+        prompt = ChatPromptTemplate.from_template(
+            """You are a senior retention strategist creating a final execution playbook for a real company.
 
-            "30_day_plan": {
-                "phase": "Foundation & Quick Wins",
-                "initiatives": roadmap["30_day"],
-                "kpis": [
-                    {"metric": "Day-7 activation rate", "target": "+5%", "owner": "Product"},
-                    {"metric": "Support ticket resolution time", "target": "-20%", "owner": "CS"},
-                ],
-                "success_criteria": "Achieve >50% of 30-day initiatives",
-                "risk_mitigation": "Weekly progress reviews; escalate blockers by Wednesday",
-            },
+## Company Context
+Industry: {industry}
+Business Model: {business_model}
+Company Stage: {company_stage}
+Target Churn Rate: {target_churn}
+Goal: {goal}
 
-            "60_day_plan": {
-                "phase": "Momentum & Scale",
-                "initiatives": roadmap["60_day"],
-                "kpis": [
-                    {"metric": "Month-2 cohort retention", "target": "+8%", "owner": "Product"},
-                    {"metric": "Feature adoption rate", "target": "+15%", "owner": "Product"},
-                ],
-                "success_criteria": "30-day initiatives delivering projected lift",
-                "risk_mitigation": "Expand team; set up automated reporting",
-            },
+## Verified Root Causes (from data analysis)
+{root_causes}
 
-            "90_day_plan": {
-                "phase": "Optimization & Refinement",
-                "initiatives": roadmap["90_day"],
-                "kpis": [
-                    {"metric": "3-month retention lift", "target": f"+{round(lift_percent * 0.7, 1)}%", "owner": "Analytics"},
-                    {"metric": "Net Retention", "target": "+10%", "owner": "Executive"},
-                ],
-                "success_criteria": f"Achieve {round(lift_percent * 0.8, 1)}% of projected lift",
-                "risk_mitigation": "Prepare follow-on initiatives for Q2",
-            },
+## Strategies Proposed (from specialist agents)
+Unit Economist: {economist}
+JTBD Specialist: {jtbd}
+Growth Hacker: {growth}
 
-            "team_structure": {
-                "executive_sponsor": "VP Product / Chief Revenue Officer",
-                "product_lead": "Product Manager (Retention)",
-                "data_analyst": "Analytics Engineer",
-                "contributors": ["Customer Success", "Engineering", "Marketing"],
-            },
+## Merged Strategy Recommendations
+{strategies}
 
-            "budget_estimate": {
-                "technology": "$15,000",
-                "people": "$50,000 (2 FTE for 3 months)",
-                "marketing": "$10,000",
-                "total": "$75,000",
-            },
+## Simulation Results
+Projected Lift: {lift}%
+Simulations: {simulations}
 
-            "success_metrics": {
-                "primary": f"Achieve >{round(lift_percent * 0.8, 1)}% retention improvement",
-                "secondary": [
-                    "Improve Day-7 activation by >5%",
-                    "Increase feature adoption by >15%",
-                    "Reduce support resolution time by >15%",
-                ],
-                "measurement_frequency": "Weekly dashboards; monthly business reviews",
-            },
+## Constraints
+{constraints}
 
-            "contingency": {
-                "if_behind_pace": "Increase A/B test intensity; escalate to executive steering",
-                "if_exceeding_goals": "Expand scope; pursue additional retention initiatives",
-                "review_cadence": "Weekly ops review; bi-weekly steering committee",
-            },
-        }
+## Critic Feedback
+{criticism}
+
+---
+
+Based on ALL of the above real data, create a detailed execution playbook.
+
+For EACH problem identified, structure it as:
+
+1. **Problem**: What specific problem was discovered (reference the actual root cause)
+2. **Solution**: How exactly to solve it (reference the actual strategy proposed)
+3. **Retention Impact**: How much retention improvement this specific solution can drive (use real numbers from the simulation/lift data)
+4. **Effort & Steps**: Step-by-step implementation plan with effort estimates
+
+Return ONLY a valid JSON object with this exact structure:
+{{
+    "title": "Retention Optimization Playbook",
+    "executive_summary": {{
+        "total_problems_identified": 3,
+        "total_projected_retention_lift": "{lift}%",
+        "estimated_timeline": "90 days",
+        "estimated_budget": "$XX,XXX",
+        "confidence_level": "High/Medium/Low"
+    }},
+    "problems_and_solutions": [
+        {{
+            "priority": 1,
+            "problem": {{
+                "title": "Short problem title",
+                "description": "Detailed description of the problem based on actual data",
+                "affected_segment": "Which customer segment is affected",
+                "current_impact": "How much churn this problem causes (use real data)"
+            }},
+            "solution": {{
+                "title": "Short solution title",
+                "description": "Detailed explanation of how to solve this",
+                "framework_used": "Which strategy framework (Unit Economics / JTBD / Growth)",
+                "key_actions": ["Action 1", "Action 2", "Action 3"]
+            }},
+            "retention_impact": {{
+                "estimated_lift_percent": 5.0,
+                "estimated_users_retained": 50,
+                "estimated_revenue_impact": "$50,000",
+                "confidence": 0.85,
+                "time_to_impact": "30 days"
+            }},
+            "implementation_steps": [
+                {{
+                    "step": 1,
+                    "action": "What to do",
+                    "owner": "Team/Role responsible",
+                    "effort": "low/medium/high",
+                    "timeline": "Week 1-2",
+                    "deliverable": "What gets produced",
+                    "dependencies": ["Any blockers"]
+                }}
+            ]
+        }}
+    ],
+    "30_60_90_roadmap": {{
+        "phase_1_30_days": {{
+            "theme": "Foundation & Quick Wins",
+            "goals": ["Goal 1", "Goal 2"],
+            "key_milestones": ["Milestone 1", "Milestone 2"],
+            "expected_lift": "X%"
+        }},
+        "phase_2_60_days": {{
+            "theme": "Scale & Optimize",
+            "goals": ["Goal 1", "Goal 2"],
+            "key_milestones": ["Milestone 1", "Milestone 2"],
+            "expected_lift": "X%"
+        }},
+        "phase_3_90_days": {{
+            "theme": "Measure & Iterate",
+            "goals": ["Goal 1", "Goal 2"],
+            "key_milestones": ["Milestone 1", "Milestone 2"],
+            "expected_lift": "X%"
+        }}
+    }},
+    "success_metrics": [
+        {{
+            "metric": "Metric name",
+            "current_value": "X%",
+            "target_value": "Y%",
+            "measurement_method": "How to measure",
+            "review_frequency": "Weekly/Monthly"
+        }}
+    ],
+    "risks_and_mitigations": [
+        {{
+            "risk": "What could go wrong",
+            "probability": "low/medium/high",
+            "mitigation": "How to prevent it",
+            "contingency": "What to do if it happens"
+        }}
+    ],
+    "resource_requirements": {{
+        "team": ["Role 1", "Role 2"],
+        "technology": ["Tool 1", "Tool 2"],
+        "budget_breakdown": {{
+            "people": "$X",
+            "technology": "$X",
+            "marketing": "$X",
+            "total": "$X"
+        }}
+    }}
+}}"""
+        )
+
+        root_causes_str = json.dumps(verified_root_causes, indent=2)
+        strategies_str = json.dumps(merged_strategies, indent=2)
+
+        response = llm.invoke(prompt.format(
+            industry=input_context.get("industry", "Unknown"),
+            business_model=input_context.get("business_model", "Unknown"),
+            company_stage=input_context.get("company_stage", "Unknown"),
+            target_churn=input_context.get("target_churn_rate", "Unknown"),
+            goal=input_context.get("goal", "Reduce churn"),
+            root_causes=root_causes_str,
+            economist=json.dumps(economist_output, indent=2)[:1500],
+            jtbd=json.dumps(jtbd_output, indent=2)[:1500],
+            growth=json.dumps(growth_output, indent=2)[:1500],
+            strategies=strategies_str,
+            lift=lift_percent,
+            simulations=json.dumps(simulations, indent=2)[:1000] if simulations else "No simulation data",
+            constraints=json.dumps(constrained_brief, indent=2)[:1000] if constrained_brief else "No constraints",
+            criticism=json.dumps(criticism, indent=2)[:500] if criticism else "No critic feedback",
+        ))
+
+        content = response.content.strip()
+        content = re.sub(r'^```(?:json)?\s*', '', content)
+        content = re.sub(r'\s*```$', '', content)
+
+        playbook = json.loads(content)
+
+        # Enrich with metadata
+        playbook["created_date"] = datetime.now().isoformat()
+        playbook["company"] = input_context.get("industry", "SaaS")
+        playbook["estimated_total_lift"] = round(lift_percent, 1)
 
         return {
-            "final_playbook": final_playbook,
+            "final_playbook": playbook,
             "playbook_status": "approved_for_execution",
             "current_node": "execution_architect",
         }
 
     except Exception as e:
         return {
-            "final_playbook": {
-                "title": "Retention Optimization Playbook (Draft)",
-                "status": "error",
-                "error": str(e),
-            },
+            "final_playbook": {"error": str(e)},
+            "playbook_status": "error",
             "errors": [*state.get("errors", []), f"Execution architect error: {str(e)}"],
             "current_node": "execution_architect",
         }
-
-
-def generate_roadmap(strategies: list, lift_percent: float) -> dict:
-    """Generate phased 30/60/90 roadmap based on strategies."""
-    roadmap = {
-        "30_day": [],
-        "60_day": [],
-        "90_day": [],
-    }
-
-    # Distribute strategies across phases
-    for i, strategy in enumerate(strategies[:3]):
-        initiative = {
-            "name": strategy.get("recommendation", f"Initiative {i+1}"),
-            "description": f"Execute {strategy.get('framework', 'strategy')} recommendation",
-            "owner": "TBD",
-            "effort": "medium",
-            "expected_lift": round(lift_percent / 3, 1),
-        }
-
-        if i == 0:
-            roadmap["30_day"].append({**initiative, "timeline": "Weeks 1-2", "status": "planning"})
-        elif i == 1:
-            roadmap["60_day"].append({**initiative, "timeline": "Weeks 3-5", "status": "planning"})
-        else:
-            roadmap["90_day"].append({**initiative, "timeline": "Weeks 6-9", "status": "planning"})
-
-    # Add standard initiatives
-    roadmap["30_day"].extend([
-        {
-            "name": "Deploy analytics instrumentation",
-            "description": "Set up detailed tracking for retention KPIs",
-            "owner": "Analytics",
-            "effort": "low",
-            "timeline": "Week 1",
-        },
-        {
-            "name": "Kickoff discovery with customer interviews",
-            "description": "Validate hypotheses with 10+ interviews",
-            "owner": "Product",
-            "effort": "medium",
-            "timeline": "Weeks 1-2",
-        },
-    ])
-
-    roadmap["60_day"].extend([
-        {
-            "name": "Launch A/B tests for top 2 initiatives",
-            "description": "Run simultaneous tests; measure impact",
-            "owner": "Analytics",
-            "effort": "high",
-            "timeline": "Weeks 3-4",
-        },
-    ])
-
-    roadmap["90_day"].extend([
-        {
-            "name": "Full rollout of winning strategies",
-            "description": "Scale validated tactics to 100% of user base",
-            "owner": "Product",
-            "effort": "high",
-            "timeline": "Weeks 8-9",
-        },
-    ])
-
-    return roadmap
-
-
-def determine_resource_requirement(strategies: list) -> str:
-    """Determine resource needs based on strategy complexity."""
-    if len(strategies) >= 3:
-        return "3-4 FTE (Product, Analytics, Engineering, CS Lead)"
-    elif len(strategies) >= 2:
-        return "2-3 FTE (Product, Analytics, CS)"
-    else:
-        return "1-2 FTE (Product, Analytics)"
