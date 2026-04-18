@@ -30,7 +30,6 @@ Flow:
 from __future__ import annotations
 
 from langgraph.graph import StateGraph, END
-from langgraph.checkpoint.memory import MemorySaver
 
 from app.graph.state import RetentionGraphState
 from app.graph.conditions import (
@@ -145,6 +144,5 @@ def build_retention_graph() -> StateGraph:
     # Node 12 → END
     graph.add_edge("execution_architect", END)
 
-    # ── Compile with Memory for HITL ─────────────────────────────────
-    memory = MemorySaver()
-    return graph.compile(checkpointer=memory, interrupt_before=["adaptive_hitl"])
+    # ── Compile (no interrupt for API mode; add interrupt_before=["adaptive_hitl"] when HITL is wired up) ──
+    return graph.compile()

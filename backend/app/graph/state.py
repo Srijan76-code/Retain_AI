@@ -35,6 +35,7 @@ class RetentionGraphState(TypedDict, total=False):
     questionnaire: dict[str, Any]
 
     # ── Node 1: Input Ingest ─────────────────────────────────────────
+    normalized_df: list[dict[str, Any]]   # DataFrame stored as list of row dicts
     input_context: dict[str, Any]
     input_constraints: dict[str, Any]
 

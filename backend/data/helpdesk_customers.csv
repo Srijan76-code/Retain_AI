@@ -1,0 +1,301 @@
+Customer_ID,Company_Name,Months_Active,Integration_Complete,Logins_Per_Month,Support_Tickets_Used,Plan,LTV_Estimate,Acquisition_Channel,Churn_Month,is_churned,Churn_Reason,NPS_Score,Onboarding_Completed
+C001,TechStartup Inc,24,Yes,85,12,Professional,2400,Referral,0,0,Still Active,8,Yes
+C002,CloudCorp,18,Yes,62,8,Professional,1800,Referral,0,0,Still Active,9,Yes
+C003,DataFlow Systems,6,Yes,15,2,Starter,200,Organic,6,1,Feature gap vs Zendesk,2,Yes
+C004,FastGrowth Ltd,30,Yes,120,15,Professional,3000,Organic,0,0,Still Active,9,Yes
+C005,StartupX,3,No,5,1,Starter,100,Paid Ads,3,1,Too hard to set up,1,No
+C006,LocalServices,15,Yes,45,6,Starter,1200,Referral,0,0,Still Active,7,Yes
+C007,TechHub,12,Yes,35,4,Starter,900,Organic,0,0,Still Active,6,Yes
+C008,QuickSupport,8,No,8,1,Starter,200,Paid Ads,8,1,Setup incomplete,2,No
+C009,EnterpriseOne,36,Yes,200,20,Professional,3600,Outbound,0,0,Still Active,9,Yes
+C010,GrowthCo,9,Yes,28,3,Starter,700,Paid Ads,0,0,Still Active,5,Yes
+C011,SmallBiz,2,No,2,0,Starter,50,Paid Ads,2,1,Too complicated,1,No
+C012,ScaleUp,28,Yes,190,18,Professional,3200,Outbound,0,0,Still Active,8,Yes
+C013,ServiceMax,19,Yes,75,7,Professional,1900,Organic,0,0,Still Active,8,Yes
+C014,WebAgency,7,No,12,1,Starter,150,Paid Ads,7,1,Manual process better,2,No
+C015,CloudSoft,11,Yes,52,5,Starter,850,Referral,0,0,Still Active,7,Yes
+C016,DigitalFirst,25,Yes,180,14,Professional,2800,Organic,0,0,Still Active,9,Yes
+C017,FastTrack,4,No,6,0,Starter,80,Paid Ads,4,1,Too expensive,1,No
+C018,SupportHub,20,Yes,110,9,Professional,2200,Outbound,0,0,Still Active,8,Yes
+C019,TechTeam,14,Yes,65,6,Starter,1000,Organic,0,0,Still Active,7,Yes
+C020,MegaCorp,32,Yes,250,25,Professional,3600,Outbound,0,0,Still Active,9,Yes
+C021,InnovateLabs,5,No,10,1,Starter,120,Paid Ads,5,1,Setup incomplete,2,No
+C022,FutureNow,22,Yes,160,12,Professional,2500,Organic,0,0,Still Active,8,Yes
+C023,QuickStart,10,Yes,42,3,Starter,700,Referral,0,0,Still Active,6,Yes
+C024,BuildIt,13,Yes,68,5,Starter,1050,Organic,0,0,Still Active,7,Yes
+C025,SwiftCode,26,Yes,195,14,Professional,2900,Referral,0,0,Still Active,8,Yes
+C026,Minimal,1,No,1,0,Starter,30,Paid Ads,1,1,Didn't use it,1,No
+C027,ProService,17,Yes,88,6,Professional,1800,Organic,0,0,Still Active,8,Yes
+C028,HighScale,29,Yes,220,18,Professional,3250,Outbound,0,0,Still Active,9,Yes
+C029,EasyFlow,6,No,8,1,Starter,150,Paid Ads,6,1,Feature gap,2,No
+C030,SmartSys,16,Yes,92,7,Professional,1900,Outbound,0,0,Still Active,8,Yes
+C031,VisionCorp,21,Yes,125,10,Professional,2300,Organic,0,0,Still Active,8,Yes
+C032,QuickFix,8,No,18,2,Starter,300,Paid Ads,8,1,Pricing vs freshdesk,2,No
+C033,TechAdvanced,27,Yes,215,16,Professional,3050,Referral,0,0,Still Active,9,Yes
+C034,SimpleOps,12,Yes,58,4,Starter,950,Organic,0,0,Still Active,6,Yes
+C035,StartupDream,4,No,7,0,Starter,90,Paid Ads,4,1,Too hard,1,No
+C036,ProSupport,24,Yes,180,13,Professional,2700,Outbound,0,0,Still Active,8,Yes
+C037,CloudTeam,18,Yes,102,8,Professional,1850,Organic,0,0,Still Active,8,Yes
+C038,WebFirst,7,No,15,1,Starter,180,Paid Ads,7,1,Manual better,2,No
+C039,ScaleFast,30,Yes,260,22,Professional,3500,Outbound,0,0,Still Active,9,Yes
+C040,GrowthFirst,11,Yes,55,5,Starter,850,Referral,0,0,Still Active,7,Yes
+C041,TeamSupport,19,Yes,120,9,Professional,2100,Organic,0,0,Still Active,8,Yes
+C042,SmartHelper,9,Yes,35,3,Starter,650,Paid Ads,0,0,Still Active,5,Yes
+C043,ProServices,25,Yes,205,15,Professional,2850,Referral,0,0,Still Active,8,Yes
+C044,BusinessFlow,15,Yes,78,6,Starter,1150,Organic,0,0,Still Active,7,Yes
+C045,QuickTeam,3,No,4,0,Starter,70,Paid Ads,3,1,Didn't need it,1,No
+C046,AdvancedCorp,28,Yes,245,17,Professional,3150,Outbound,0,0,Still Active,8,Yes
+C047,TeamFirst,14,Yes,72,5,Starter,1050,Organic,0,0,Still Active,7,Yes
+C048,VisionFirst,22,Yes,170,11,Professional,2450,Paid Ads,0,0,Still Active,7,Yes
+C049,FlowSupport,6,No,12,1,Starter,180,Paid Ads,6,1,Feature gap,2,No
+C050,SimpleTeam,20,Yes,125,10,Professional,2200,Organic,0,0,Still Active,8,Yes
+C051,ProteamHub,12,Yes,62,4,Starter,950,Referral,0,0,Still Active,6,Yes
+C052,DigitalCorp,6,Yes,18,2,Starter,350,Referral,6,1,Switched to zendesk,3,Yes
+C053,CloudFirst,30,Yes,280,25,Professional,3650,Organic,0,0,Still Active,9,Yes
+C054,TeamGrowth,10,Yes,48,4,Starter,750,Paid Ads,0,0,Still Active,6,Yes
+C055,SmartHub,16,Yes,95,7,Professional,1950,Organic,0,0,Still Active,8,Yes
+C056,WebSupport,2,No,2,0,Starter,40,Paid Ads,2,1,Didn't onboard,1,No
+C057,GrowthTeam,25,Yes,200,14,Professional,2800,Outbound,0,0,Still Active,8,Yes
+C058,ProfessionalCorp,18,Yes,108,9,Professional,1900,Referral,0,0,Still Active,8,Yes
+C059,FastService,7,No,14,1,Starter,190,Paid Ads,7,1,Process better,2,No
+C060,ScaleHub,32,Yes,265,24,Professional,3600,Outbound,0,0,Still Active,9,Yes
+C061,SimpleFix,5,No,8,1,Starter,110,Paid Ads,5,1,Too expensive,2,No
+C062,TeamFlow,22,Yes,155,12,Professional,2400,Organic,0,0,Still Active,8,Yes
+C063,ProFlow,11,Yes,58,5,Starter,880,Referral,0,0,Still Active,7,Yes
+C064,SmartService,13,Yes,70,5,Starter,1050,Organic,0,0,Still Active,7,Yes
+C065,VisionTeam,26,Yes,210,15,Professional,2900,Referral,0,0,Still Active,8,Yes
+C066,QuickHelp,1,No,1,0,Starter,25,Paid Ads,1,1,Didn't use,1,No
+C067,CloudService,17,Yes,92,6,Professional,1800,Organic,0,0,Still Active,8,Yes
+C068,ScaleFlow,29,Yes,235,19,Professional,3300,Outbound,0,0,Still Active,9,Yes
+C069,SimpleCloud,6,No,10,1,Starter,160,Paid Ads,6,1,Feature gap,2,No
+C070,TeamService,16,Yes,98,7,Professional,1900,Outbound,0,0,Still Active,8,Yes
+C071,ProGrowth,21,Yes,138,11,Professional,2400,Organic,0,0,Still Active,8,Yes
+C072,WebFlow,8,No,22,2,Starter,330,Paid Ads,8,1,Pricing,2,No
+C073,AdvanceFlow,27,Yes,220,17,Professional,3100,Referral,0,0,Still Active,9,Yes
+C074,SimpleGrowth,12,Yes,65,4,Starter,1000,Organic,0,0,Still Active,6,Yes
+C075,StartFlow,4,No,8,0,Starter,95,Paid Ads,4,1,Setup hard,1,No
+C076,TeamHub,24,Yes,188,13,Professional,2700,Outbound,0,0,Still Active,8,Yes
+C077,CloudFlow,18,Yes,110,8,Professional,1900,Organic,0,0,Still Active,8,Yes
+C078,ProService2,7,No,16,1,Starter,200,Paid Ads,7,1,Manual better,2,No
+C079,ScaleService,30,Yes,270,23,Professional,3550,Outbound,0,0,Still Active,9,Yes
+C080,GrowthHub,11,Yes,60,5,Starter,900,Referral,0,0,Still Active,7,Yes
+C081,TeamFlow2,19,Yes,128,10,Professional,2150,Organic,0,0,Still Active,8,Yes
+C082,SmartFlow,9,Yes,38,3,Starter,700,Paid Ads,0,0,Still Active,5,Yes
+C083,ProHub,25,Yes,210,15,Professional,2900,Referral,0,0,Still Active,8,Yes
+C084,BusinessHub,15,Yes,82,6,Starter,1200,Organic,0,0,Still Active,7,Yes
+C085,QuickFlow,3,No,5,0,Starter,75,Paid Ads,3,1,Didn't need,1,No
+C086,AdvancedHub,28,Yes,250,18,Professional,3200,Outbound,0,0,Still Active,8,Yes
+C087,TeamAdvance,14,Yes,75,5,Starter,1100,Organic,0,0,Still Active,7,Yes
+C088,VisionFlow,22,Yes,175,12,Professional,2500,Paid Ads,0,0,Still Active,7,Yes
+C089,FlowHub,6,No,14,1,Starter,200,Paid Ads,6,1,Feature gap,2,No
+C090,SimpleAdvance,20,Yes,130,10,Professional,2250,Organic,0,0,Still Active,8,Yes
+C091,ProGrowth2,12,Yes,68,4,Starter,1000,Referral,0,0,Still Active,6,Yes
+C092,DigitalFlow,6,Yes,20,2,Starter,375,Referral,6,1,Switched platforms,3,Yes
+C093,CloudAdvance,30,Yes,290,26,Professional,3700,Organic,0,0,Still Active,9,Yes
+C094,TeamGrowth2,10,Yes,50,4,Starter,800,Paid Ads,0,0,Still Active,6,Yes
+C095,SmartAdvance,16,Yes,100,7,Professional,2000,Organic,0,0,Still Active,8,Yes
+C096,WebAdvance,2,No,2,0,Starter,45,Paid Ads,2,1,Didn't onboard,1,No
+C097,GrowthAdvance,25,Yes,208,14,Professional,2900,Outbound,0,0,Still Active,8,Yes
+C098,ProfessionalFlow,18,Yes,112,9,Professional,1950,Referral,0,0,Still Active,8,Yes
+C099,FastAdvance,7,No,15,1,Starter,210,Paid Ads,7,1,Process better,2,No
+C100,ScaleAdvance,32,Yes,275,25,Professional,3700,Outbound,0,0,Still Active,9,Yes
+C101,SimpleAdvance2,5,No,9,1,Starter,130,Paid Ads,5,1,Too expensive,2,No
+C102,TeamFlow3,22,Yes,160,12,Professional,2450,Organic,0,0,Still Active,8,Yes
+C103,ProFlow2,11,Yes,62,5,Starter,920,Referral,0,0,Still Active,7,Yes
+C104,SmartService2,13,Yes,72,5,Starter,1100,Organic,0,0,Still Active,7,Yes
+C105,VisionTeam2,26,Yes,215,15,Professional,2950,Referral,0,0,Still Active,8,Yes
+C106,QuickHelp2,1,No,1,0,Starter,30,Paid Ads,1,1,Didn't use,1,No
+C107,CloudService2,17,Yes,95,6,Professional,1850,Organic,0,0,Still Active,8,Yes
+C108,ScaleFlow2,29,Yes,240,19,Professional,3350,Outbound,0,0,Still Active,9,Yes
+C109,SimpleCloud2,6,No,11,1,Starter,180,Paid Ads,6,1,Feature gap,2,No
+C110,TeamService2,16,Yes,102,7,Professional,1950,Outbound,0,0,Still Active,8,Yes
+C111,ProGrowth3,21,Yes,142,11,Professional,2450,Organic,0,0,Still Active,8,Yes
+C112,WebFlow2,8,No,24,2,Starter,360,Paid Ads,8,1,Pricing,2,No
+C113,AdvanceFlow2,27,Yes,225,17,Professional,3150,Referral,0,0,Still Active,9,Yes
+C114,SimpleGrowth2,12,Yes,68,4,Starter,1050,Organic,0,0,Still Active,6,Yes
+C115,StartFlow2,4,No,9,0,Starter,110,Paid Ads,4,1,Setup hard,1,No
+C116,TeamHub2,24,Yes,192,13,Professional,2750,Outbound,0,0,Still Active,8,Yes
+C117,CloudFlow2,18,Yes,112,8,Professional,1950,Organic,0,0,Still Active,8,Yes
+C118,ProService3,7,No,17,1,Starter,220,Paid Ads,7,1,Manual better,2,No
+C119,ScaleService2,30,Yes,275,23,Professional,3600,Outbound,0,0,Still Active,9,Yes
+C120,GrowthHub2,11,Yes,62,5,Starter,950,Referral,0,0,Still Active,7,Yes
+C121,TeamFlow4,19,Yes,132,10,Professional,2200,Organic,0,0,Still Active,8,Yes
+C122,SmartFlow2,9,Yes,40,3,Starter,750,Paid Ads,0,0,Still Active,5,Yes
+C123,ProHub2,25,Yes,215,15,Professional,2950,Referral,0,0,Still Active,8,Yes
+C124,BusinessHub2,15,Yes,85,6,Starter,1250,Organic,0,0,Still Active,7,Yes
+C125,QuickFlow2,3,No,6,0,Starter,90,Paid Ads,3,1,Didn't need,1,No
+C126,AdvancedHub2,28,Yes,255,18,Professional,3250,Outbound,0,0,Still Active,8,Yes
+C127,TeamAdvance2,14,Yes,78,5,Starter,1150,Organic,0,0,Still Active,7,Yes
+C128,VisionFlow2,22,Yes,180,12,Professional,2550,Paid Ads,0,0,Still Active,7,Yes
+C129,FlowHub2,6,No,15,1,Starter,220,Paid Ads,6,1,Feature gap,2,No
+C130,SimpleAdvance3,20,Yes,135,10,Professional,2300,Organic,0,0,Still Active,8,Yes
+C131,ProGrowth4,12,Yes,70,4,Starter,1050,Referral,0,0,Still Active,6,Yes
+C132,DigitalFlow2,6,Yes,22,2,Starter,400,Referral,6,1,Switched platforms,3,Yes
+C133,CloudAdvance2,30,Yes,295,26,Professional,3750,Organic,0,0,Still Active,9,Yes
+C134,TeamGrowth3,10,Yes,52,4,Starter,850,Paid Ads,0,0,Still Active,6,Yes
+C135,SmartAdvance2,16,Yes,105,7,Professional,2050,Organic,0,0,Still Active,8,Yes
+C136,WebAdvance2,2,No,2,0,Starter,50,Paid Ads,2,1,Didn't onboard,1,No
+C137,GrowthAdvance2,25,Yes,215,14,Professional,2950,Outbound,0,0,Still Active,8,Yes
+C138,ProfessionalFlow2,18,Yes,115,9,Professional,2000,Referral,0,0,Still Active,8,Yes
+C139,FastAdvance2,7,No,16,1,Starter,230,Paid Ads,7,1,Process better,2,No
+C140,ScaleAdvance2,32,Yes,280,25,Professional,3750,Outbound,0,0,Still Active,9,Yes
+C141,SimpleAdvance4,5,No,10,1,Starter,150,Paid Ads,5,1,Too expensive,2,No
+C142,TeamFlow5,22,Yes,165,12,Professional,2500,Organic,0,0,Still Active,8,Yes
+C143,ProFlow3,11,Yes,65,5,Starter,960,Referral,0,0,Still Active,7,Yes
+C144,SmartService3,13,Yes,75,5,Starter,1150,Organic,0,0,Still Active,7,Yes
+C145,VisionTeam3,26,Yes,220,15,Professional,3000,Referral,0,0,Still Active,8,Yes
+C146,QuickHelp3,1,No,1,0,Starter,35,Paid Ads,1,1,Didn't use,1,No
+C147,CloudService3,17,Yes,98,6,Professional,1900,Organic,0,0,Still Active,8,Yes
+C148,ScaleFlow3,29,Yes,245,19,Professional,3400,Outbound,0,0,Still Active,9,Yes
+C149,SimpleCloud3,6,No,12,1,Starter,200,Paid Ads,6,1,Feature gap,2,No
+C150,TeamService3,16,Yes,105,7,Professional,2000,Outbound,0,0,Still Active,8,Yes
+C151,NoIntegration1,2,No,3,0,Starter,40,Paid Ads,2,1,Setup too complex,1,No
+C152,NoIntegration2,3,No,2,0,Starter,50,Paid Ads,3,1,Couldn't integrate,1,No
+C153,NoIntegration3,2,No,4,1,Starter,45,Paid Ads,2,1,Installation failed,1,No
+C154,NoIntegration4,1,No,1,0,Starter,20,Paid Ads,1,1,Too hard,1,No
+C155,NoIntegration5,4,No,5,1,Starter,60,Paid Ads,4,1,Integration incomplete,1,No
+C156,NoIntegration6,2,No,3,0,Starter,35,Paid Ads,2,1,Setup failed,1,No
+C157,NoIntegration7,3,No,2,1,Starter,55,Paid Ads,3,1,Couldn't connect,1,No
+C158,NoIntegration8,1,No,1,0,Starter,25,Paid Ads,1,1,No integration,1,No
+C159,NoIntegration9,2,No,4,0,Starter,50,Paid Ads,2,1,Setup broken,1,No
+C160,NoIntegration10,3,No,3,1,Starter,60,Paid Ads,3,1,Integration problems,1,No
+C161,ChurnedFreeUser1,2,No,5,0,Free,0,Paid Ads,2,1,Free plan limitations,1,No
+C162,ChurnedFreeUser2,1,No,2,0,Free,0,Paid Ads,1,1,Didn't subscribe,1,No
+C163,ChurnedFreeUser3,3,No,3,0,Free,0,Paid Ads,3,1,Limited features,1,No
+C164,ChurnedFreeUser4,2,No,4,0,Free,0,Paid Ads,2,1,Free tier not enough,1,No
+C165,ChurnedFreeUser5,1,No,1,0,Free,0,Paid Ads,1,1,Not interested,1,No
+C166,ChurnedFreeUser6,4,No,6,1,Free,0,Paid Ads,4,1,Needed paid features,1,No
+C167,ChurnedFreeUser7,2,No,3,0,Free,0,Paid Ads,2,1,Free plan expired,1,No
+C168,ChurnedFreeUser8,3,No,4,1,Free,0,Paid Ads,3,1,No credit card,1,No
+C169,ChurnedFreeUser9,1,No,2,0,Free,0,Paid Ads,1,1,Signed up but left,1,No
+C170,ChurnedFreeUser10,2,No,5,0,Free,0,Paid Ads,2,1,Free user churn,1,No
+C171,LowEngagement1,8,Yes,5,0,Starter,120,Paid Ads,8,1,Never used,2,Yes
+C172,LowEngagement2,7,Yes,3,0,Starter,100,Paid Ads,7,1,No engagement,2,Yes
+C173,LowEngagement3,6,Yes,4,0,Starter,110,Paid Ads,6,1,Inactive,2,Yes
+C174,LowEngagement4,9,Yes,2,0,Starter,90,Paid Ads,9,1,Never logged in again,2,Yes
+C175,LowEngagement5,7,Yes,6,1,Starter,130,Paid Ads,7,1,Low activity,2,Yes
+C176,LowEngagement6,8,Yes,4,0,Starter,100,Paid Ads,8,1,Dormant,2,Yes
+C177,LowEngagement7,6,Yes,5,0,Starter,115,Paid Ads,6,1,Abandoned,2,Yes
+C178,LowEngagement8,10,Yes,3,0,Starter,80,Paid Ads,10,1,No usage,2,Yes
+C179,LowEngagement9,7,Yes,2,0,Starter,70,Paid Ads,7,1,Never engaged,2,Yes
+C180,LowEngagement10,8,Yes,4,0,Starter,100,Paid Ads,8,1,Inactive user,2,Yes
+C181,FeatureGap1,6,Yes,20,1,Starter,200,Paid Ads,6,1,Missing features,2,Yes
+C182,FeatureGap2,5,Yes,18,2,Starter,180,Paid Ads,5,1,Limited functionality,2,Yes
+C183,FeatureGap3,7,Yes,22,1,Starter,210,Paid Ads,7,1,Features not enough,2,Yes
+C184,FeatureGap4,6,Yes,19,1,Starter,195,Paid Ads,6,1,Compared to competitors,2,Yes
+C185,FeatureGap5,8,Yes,21,2,Starter,220,Paid Ads,8,1,Wanted more features,2,Yes
+C186,FeatureGap6,5,Yes,17,1,Starter,170,Paid Ads,5,1,Feature parity issue,2,Yes
+C187,FeatureGap7,6,Yes,20,2,Starter,210,Paid Ads,6,1,Missing key tools,2,Yes
+C188,FeatureGap8,7,Yes,23,1,Starter,230,Paid Ads,7,1,Not enough capability,2,Yes
+C189,FeatureGap9,5,Yes,18,1,Starter,185,Paid Ads,5,1,Feature limitations,2,Yes
+C190,FeatureGap10,6,Yes,19,2,Starter,200,Paid Ads,6,1,Needed advanced tools,2,Yes
+C191,PricingSensitive1,8,Yes,45,3,Starter,250,Paid Ads,8,1,Too expensive,2,Yes
+C192,PricingSensitive2,7,Yes,42,2,Starter,220,Paid Ads,7,1,High cost,2,Yes
+C193,PricingSensitive3,9,Yes,48,3,Starter,280,Paid Ads,9,1,Couldn't afford,2,Yes
+C194,PricingSensitive4,6,Yes,40,2,Starter,200,Paid Ads,6,1,Budget constraints,2,Yes
+C195,PricingSensitive5,8,Yes,44,4,Starter,260,Paid Ads,8,1,Price too high,2,Yes
+C196,PricingSensitive6,7,Yes,41,2,Starter,210,Paid Ads,7,1,Cost was issue,2,Yes
+C197,PricingSensitive7,9,Yes,46,3,Starter,270,Paid Ads,9,1,Expensive plan,2,Yes
+C198,PricingSensitive8,6,Yes,39,2,Starter,190,Paid Ads,6,1,Budget issue,2,Yes
+C199,PricingSensitive9,8,Yes,43,3,Starter,250,Paid Ads,8,1,Pricing concerns,2,Yes
+C200,PricingSensitive10,7,Yes,42,2,Starter,220,Paid Ads,7,1,Too pricey,2,Yes
+C201,CompetitorSwitch1,12,Yes,80,8,Starter,350,Organic,12,1,Switched to Zendesk,3,Yes
+C202,CompetitorSwitch2,11,Yes,75,7,Starter,330,Organic,11,1,Moved to Freshdesk,3,Yes
+C203,CompetitorSwitch3,10,Yes,78,6,Starter,340,Organic,10,1,Better alternative found,3,Yes
+C204,CompetitorSwitch4,13,Yes,82,9,Starter,360,Organic,13,1,Competitor had more,3,Yes
+C205,CompetitorSwitch5,9,Yes,72,6,Starter,310,Organic,9,1,Switched platforms,3,Yes
+C206,CompetitorSwitch6,11,Yes,76,7,Starter,335,Organic,11,1,Better product elsewhere,3,Yes
+C207,CompetitorSwitch7,10,Yes,79,8,Starter,345,Organic,10,1,Upgraded to competitor,3,Yes
+C208,CompetitorSwitch8,12,Yes,81,9,Starter,355,Organic,12,1,Moved to new vendor,3,Yes
+C209,CompetitorSwitch9,9,Yes,74,7,Starter,320,Organic,9,1,Found better tool,3,Yes
+C210,CompetitorSwitch10,10,Yes,77,6,Starter,335,Organic,10,1,Competitive loss,3,Yes
+C211,ActiveUser1,24,Yes,95,14,Professional,2600,Organic,0,0,Still Active,8,Yes
+C212,ActiveUser2,20,Yes,88,11,Professional,2100,Organic,0,0,Still Active,8,Yes
+C213,ActiveUser3,26,Yes,102,16,Professional,2800,Organic,0,0,Still Active,9,Yes
+C214,ActiveUser4,23,Yes,92,13,Professional,2500,Organic,0,0,Still Active,8,Yes
+C215,ActiveUser5,25,Yes,98,15,Professional,2700,Organic,0,0,Still Active,8,Yes
+C216,ActiveUser6,21,Yes,85,10,Professional,2200,Organic,0,0,Still Active,8,Yes
+C217,ActiveUser7,27,Yes,108,17,Professional,3000,Organic,0,0,Still Active,9,Yes
+C218,ActiveUser8,22,Yes,90,12,Professional,2400,Organic,0,0,Still Active,8,Yes
+C219,ActiveUser9,24,Yes,96,14,Professional,2650,Organic,0,0,Still Active,8,Yes
+C220,ActiveUser10,20,Yes,84,11,Professional,2150,Organic,0,0,Still Active,8,Yes
+C221,ActiveUser11,28,Yes,110,18,Professional,3100,Referral,0,0,Still Active,9,Yes
+C222,ActiveUser12,19,Yes,82,9,Professional,2000,Referral,0,0,Still Active,8,Yes
+C223,ActiveUser13,26,Yes,104,15,Professional,2900,Referral,0,0,Still Active,9,Yes
+C224,ActiveUser14,21,Yes,87,11,Professional,2250,Referral,0,0,Still Active,8,Yes
+C225,ActiveUser15,23,Yes,94,13,Professional,2550,Referral,0,0,Still Active,8,Yes
+C226,ActiveUser16,25,Yes,100,16,Professional,2750,Outbound,0,0,Still Active,8,Yes
+C227,ActiveUser17,22,Yes,91,12,Professional,2450,Outbound,0,0,Still Active,8,Yes
+C228,ActiveUser18,27,Yes,106,17,Professional,2950,Outbound,0,0,Still Active,9,Yes
+C229,ActiveUser19,20,Yes,86,10,Professional,2200,Outbound,0,0,Still Active,8,Yes
+C230,ActiveUser20,24,Yes,97,14,Professional,2700,Outbound,0,0,Still Active,8,Yes
+C231,ActiveUser21,18,Yes,80,9,Starter,1200,Organic,0,0,Still Active,7,Yes
+C232,ActiveUser22,21,Yes,89,12,Starter,1300,Organic,0,0,Still Active,7,Yes
+C233,ActiveUser23,19,Yes,83,10,Starter,1250,Organic,0,0,Still Active,7,Yes
+C234,ActiveUser24,22,Yes,93,13,Starter,1350,Referral,0,0,Still Active,7,Yes
+C235,ActiveUser25,20,Yes,87,11,Starter,1300,Referral,0,0,Still Active,7,Yes
+C236,ActiveUser26,23,Yes,95,14,Starter,1400,Referral,0,0,Still Active,7,Yes
+C237,ActiveUser27,21,Yes,88,12,Starter,1320,Outbound,0,0,Still Active,7,Yes
+C238,ActiveUser28,24,Yes,98,15,Starter,1450,Outbound,0,0,Still Active,8,Yes
+C239,ActiveUser29,19,Yes,82,10,Starter,1250,Outbound,0,0,Still Active,7,Yes
+C240,ActiveUser30,22,Yes,92,13,Starter,1380,Outbound,0,0,Still Active,7,Yes
+C241,ActiveUser31,20,Yes,85,11,Starter,1280,Organic,0,0,Still Active,7,Yes
+C242,ActiveUser32,23,Yes,94,13,Starter,1380,Organic,0,0,Still Active,7,Yes
+C243,ActiveUser33,21,Yes,89,12,Starter,1320,Organic,0,0,Still Active,7,Yes
+C244,ActiveUser34,24,Yes,99,15,Starter,1420,Referral,0,0,Still Active,8,Yes
+C245,ActiveUser35,22,Yes,91,13,Starter,1350,Referral,0,0,Still Active,7,Yes
+C246,ActiveUser36,25,Yes,102,16,Starter,1500,Referral,0,0,Still Active,8,Yes
+C247,ActiveUser37,20,Yes,86,10,Starter,1290,Outbound,0,0,Still Active,7,Yes
+C248,ActiveUser38,23,Yes,96,14,Starter,1400,Outbound,0,0,Still Active,8,Yes
+C249,ActiveUser39,21,Yes,90,12,Starter,1330,Outbound,0,0,Still Active,7,Yes
+C250,ActiveUser40,26,Yes,105,17,Starter,1520,Organic,0,0,Still Active,8,Yes
+C251,ActiveUser41,18,Yes,80,9,Professional,2100,Organic,0,0,Still Active,8,Yes
+C252,ActiveUser42,22,Yes,92,13,Professional,2450,Organic,0,0,Still Active,8,Yes
+C253,ActiveUser43,20,Yes,87,11,Professional,2200,Organic,0,0,Still Active,8,Yes
+C254,ActiveUser44,24,Yes,98,15,Professional,2650,Referral,0,0,Still Active,8,Yes
+C255,ActiveUser45,21,Yes,89,12,Professional,2350,Referral,0,0,Still Active,8,Yes
+C256,ActiveUser46,25,Yes,105,17,Professional,2850,Referral,0,0,Still Active,8,Yes
+C257,ActiveUser47,19,Yes,84,10,Professional,2150,Outbound,0,0,Still Active,8,Yes
+C258,ActiveUser48,23,Yes,96,14,Professional,2550,Outbound,0,0,Still Active,8,Yes
+C259,ActiveUser49,22,Yes,93,13,Professional,2450,Outbound,0,0,Still Active,8,Yes
+C260,ActiveUser50,26,Yes,108,18,Professional,2950,Outbound,0,0,Still Active,9,Yes
+C261,ActiveUser51,20,Yes,86,10,Professional,2200,Organic,0,0,Still Active,8,Yes
+C262,ActiveUser52,24,Yes,100,16,Professional,2750,Organic,0,0,Still Active,8,Yes
+C263,ActiveUser53,21,Yes,91,12,Professional,2400,Organic,0,0,Still Active,8,Yes
+C264,ActiveUser54,25,Yes,104,17,Professional,2900,Referral,0,0,Still Active,9,Yes
+C265,ActiveUser55,23,Yes,95,14,Professional,2550,Referral,0,0,Still Active,8,Yes
+C266,ActiveUser56,27,Yes,110,19,Professional,3050,Referral,0,0,Still Active,9,Yes
+C267,ActiveUser57,22,Yes,92,13,Professional,2450,Outbound,0,0,Still Active,8,Yes
+C268,ActiveUser58,26,Yes,107,17,Professional,2950,Outbound,0,0,Still Active,9,Yes
+C269,ActiveUser59,21,Yes,88,12,Professional,2350,Outbound,0,0,Still Active,8,Yes
+C270,ActiveUser60,25,Yes,103,16,Professional,2850,Outbound,0,0,Still Active,8,Yes
+C271,ActiveUser61,19,Yes,83,10,Starter,1250,Organic,0,0,Still Active,7,Yes
+C272,ActiveUser62,23,Yes,97,14,Starter,1420,Organic,0,0,Still Active,8,Yes
+C273,ActiveUser63,21,Yes,90,12,Starter,1320,Organic,0,0,Still Active,7,Yes
+C274,ActiveUser64,25,Yes,106,18,Starter,1520,Referral,0,0,Still Active,8,Yes
+C275,ActiveUser65,22,Yes,93,13,Starter,1350,Referral,0,0,Still Active,7,Yes
+C276,ActiveUser66,26,Yes,109,19,Starter,1550,Referral,0,0,Still Active,8,Yes
+C277,ActiveUser67,20,Yes,87,11,Starter,1300,Outbound,0,0,Still Active,7,Yes
+C278,ActiveUser68,24,Yes,101,16,Starter,1480,Outbound,0,0,Still Active,8,Yes
+C279,ActiveUser69,23,Yes,94,14,Starter,1380,Outbound,0,0,Still Active,7,Yes
+C280,ActiveUser70,27,Yes,111,20,Starter,1580,Outbound,0,0,Still Active,8,Yes
+C281,ActiveUser71,21,Yes,89,12,Starter,1330,Organic,0,0,Still Active,7,Yes
+C282,ActiveUser72,25,Yes,103,16,Starter,1500,Organic,0,0,Still Active,8,Yes
+C283,ActiveUser73,22,Yes,95,14,Starter,1400,Organic,0,0,Still Active,7,Yes
+C284,ActiveUser74,26,Yes,108,18,Starter,1540,Referral,0,0,Still Active,8,Yes
+C285,ActiveUser75,23,Yes,98,15,Starter,1450,Referral,0,0,Still Active,8,Yes
+C286,ActiveUser76,27,Yes,112,21,Starter,1600,Referral,0,0,Still Active,8,Yes
+C287,ActiveUser77,21,Yes,91,13,Starter,1350,Outbound,0,0,Still Active,7,Yes
+C288,ActiveUser78,25,Yes,105,17,Starter,1520,Outbound,0,0,Still Active,8,Yes
+C289,ActiveUser79,23,Yes,97,14,Starter,1420,Outbound,0,0,Still Active,8,Yes
+C290,ActiveUser80,28,Yes,115,22,Starter,1620,Outbound,0,0,Still Active,8,Yes
+C291,ActiveUser81,22,Yes,93,13,Professional,2450,Organic,0,0,Still Active,8,Yes
+C292,ActiveUser82,26,Yes,109,19,Professional,3050,Organic,0,0,Still Active,9,Yes
+C293,ActiveUser83,23,Yes,96,15,Professional,2650,Organic,0,0,Still Active,8,Yes
+C294,ActiveUser84,27,Yes,112,21,Professional,3150,Referral,0,0,Still Active,9,Yes
+C295,ActiveUser85,24,Yes,100,16,Professional,2750,Referral,0,0,Still Active,8,Yes
+C296,ActiveUser86,28,Yes,114,22,Professional,3200,Referral,0,0,Still Active,9,Yes
+C297,ActiveUser87,22,Yes,94,14,Professional,2500,Outbound,0,0,Still Active,8,Yes
+C298,ActiveUser88,26,Yes,110,20,Professional,3000,Outbound,0,0,Still Active,9,Yes
+C299,ActiveUser89,25,Yes,104,17,Professional,2900,Outbound,0,0,Still Active,8,Yes
+C300,ActiveUser90,29,Yes,118,24,Professional,3300,Outbound,0,0,Still Active,9,Yes

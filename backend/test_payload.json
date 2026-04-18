@@ -1,0 +1,24 @@
+{
+  "raw_csv_path": "data/helpdesk_customers.csv",
+  "questionnaire": {
+    "business_context": "HelpDesk Pro is a B2B SaaS platform managing customer support tickets across email, chat, social media. 500+ companies, $2K-$15K MRR. 40% churn spike at month 6. Weak onboarding suspected (integration issues). 200% YoY growth but retention flatlined.",
+    "industry": "SaaS - Customer Support Platform",
+    "size": "500+ customers, 50-500 employees per customer",
+    "business_model": "B2B SaaS",
+    "company_stage": "Growth",
+    "revenue_model": "Monthly subscription",
+    "time_range": "last_12_months",
+    "product_lines": ["Email routing", "Multi-channel inbox", "Zapier integrations", "Reporting", "Team collaboration"],
+    "market_segment": "Mid-market",
+    "budget": "No budget constraints mentioned",
+    "legal_constraints": [],
+    "churn_definition": "Cancelled paid subscription",
+    "competitors": ["Zendesk", "Freshdesk", "Intercom"],
+    "top_channels": ["Paid ads (45%)", "Outbound sales (35%)", "Referrals (20%)"],
+    "support_model": "Email + chat (4 team members)",
+    "goal": "Reduce churn from 34.7% to 20% in 90 days",
+    "target_churn_rate": 0.20,
+    "priority_segment": "New customers (first 90 days)",
+    "edge_cases": ["Win-back campaign failed (12% ROI, $8K cost). Onboarding not scaling with sales. CEO wants upsell focus. AI feature launch in 4 months."]
+  }
+}

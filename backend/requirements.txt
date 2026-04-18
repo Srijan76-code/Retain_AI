@@ -38,6 +38,14 @@ typing-inspection==0.4.2
 typing_extensions==4.15.0
 urllib3==2.6.3
 uuid_utils==0.14.1
-uvicorn==0.44.0
-xxhash==3.6.0
-zstandard==0.25.0
+numpy>=2.1.0
+scipy>=1.14.1
+pandas>=2.2.3
+duckdb>=1.1.0
+langchain-google-genai>=0.2.0
+scikit-learn>=1.5.0
+shap>=0.51.0
+bertopic>=0.17.0
+lifelines>=0.30.0
+streamlit>=1.56.0
+google-genai>=0.3.0
