@@ -1,63 +1,151 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
+import React from "react";
+import Link from "next/link";
+import { ArrowRight, Sparkles, Shield, Zap } from "lucide-react";
+
+
+export default function HomePage() {
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <div className="min-h-screen w-full bg-black relative flex flex-col overflow-hidden">
+      {/* ── Layer 1: Colored noise dots ── */}
+      <div
+        className="absolute inset-0 z-0"
+        style={{
+          background: "#000000",
+          backgroundImage: `
+       radial-gradient(circle at 25% 25%, #222222 0.5px, transparent 1px),
+       radial-gradient(circle at 75% 75%, #111111 0.5px, transparent 1px)
+          `,
+          backgroundSize: "20px 20px, 30px 30px, 25px 25px",
+          backgroundPosition: "0 0, 10px 10px, 15px 5px",
+          maskImage:
+            "radial-gradient(ellipse 90% 80% at 50% 45%, rgba(0,0,0,1) 0%, rgba(0,0,0,0.8) 40%, rgba(0,0,0,0.4) 65%, rgba(0,0,0,0.1) 85%, transparent 100%)",
+          WebkitMaskImage:
+            "radial-gradient(ellipse 90% 80% at 50% 45%, rgba(0,0,0,1) 0%, rgba(0,0,0,0.8) 40%, rgba(0,0,0,0.4) 65%, rgba(0,0,0,0.1) 85%, transparent 100%)",
+        }}
+      />
+
+      {/* ── Layer 2: Soft center glow behind content ── */}
+      <div
+        className="absolute inset-0 z-[1] pointer-events-none"
+        style={{
+          background:
+            "radial-gradient(ellipse 50% 45% at 50% 48%, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.02) 30%, transparent 70%)",
+        }}
+      />
+
+      {/* ── Layer 3: Top edge light leak ── */}
+      <div
+        className="fixed top-0 left-0 right-0 h-[1px] z-[1] pointer-events-none"
+        style={{
+          background:
+            "linear-gradient(90deg, transparent 15%, rgba(255,255,255,0.3) 35%, rgba(255,255,255,0.5) 50%, rgba(255,255,255,0.3) 65%, transparent 85%)",
+        }}
+      />
+
+      {/* ── Layer 4: Orbital rings (retention metaphor) ── */}
+      <div className="absolute inset-0 z-[1] pointer-events-none">
+        {/* rings with radial mask — visible only near center */}
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            maskImage:
+              "radial-gradient(ellipse 55% 50% at 50% 48%, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.2) 50%, transparent 75%)",
+            WebkitMaskImage:
+              "radial-gradient(ellipse 55% 50% at 50% 48%, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.2) 50%, transparent 75%)",
+          }}
+        >
+          <div className="orbit-ring orbit-1" />
+          <div className="orbit-ring orbit-2" />
+          <div className="orbit-ring orbit-3" />
+          <div className="orbit-ring orbit-4" />
+
+          {/* orbiting dots */}
+          <div className="orbit-dot-track dot-track-1" />
+          <div className="orbit-dot-track dot-track-2" />
+          <div className="orbit-dot-track dot-track-3" />
+          <div className="orbit-dot-track dot-track-5" />
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+
+        {/* center core */}
+        <div className="retain-core" />
+      </div>
+
+      {/* ── Navbar ── */}
+      <header className="relative z-10 flex items-center justify-between px-8 h-16 max-w-7xl mx-auto w-full">
+        <Link href="/" className="flex items-center gap-3 group">
+          <div className="w-[24px] h-[24px] rounded-[6px] bg-[#fafafa] flex items-center justify-center">
+            <span
+              className="text-[12px] font-bold text-[#09090b] leading-none"
+              style={{ fontFamily: "var(--font-raleway)" }}
+            >
+              R
+            </span>
+          </div>
+          <span
+            className="text-[17px] font-semibold text-[#fafafa] tracking-[-0.02em] group-hover:opacity-80 transition-opacity"
+            style={{ fontFamily: "var(--font-raleway)" }}
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+            Retain AI
+          </span>
+        </Link>
+      </header>
+
+      {/* ── Hero Content ── */}
+      <main className="relative z-10 flex-1 flex items-center justify-center px-8">
+        <div className="max-w-3xl text-center">
+          {/* pill */}
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.04)] backdrop-blur-md mb-8">
+            <Sparkles className="w-3.5 h-3.5 text-[#a1a1aa]" />
+            <span className="text-[12px] text-[#a1a1aa] tracking-wide">
+              AI-Powered Retention Intelligence
+            </span>
+          </div>
+
+          {/* headline */}
+          <h1
+            className="text-[56px] md:text-[72px] font-bold text-[#fafafa] leading-[1.05] tracking-[-0.035em] mb-6"
+            style={{ fontFamily: "var(--font-raleway)" }}
           >
-            Documentation
-          </a>
+            Stop the churn.
+            <br />
+            <span className="bg-gradient-to-b from-[#71717a] to-[#3f3f46] bg-clip-text text-transparent">
+              Start retaining.
+            </span>
+          </h1>
+
+          <p className="text-[18px] text-[#71717a] leading-[1.7] mb-10 max-w-xl mx-auto">
+            Upload your data, answer a few questions, and get actionable
+            retention strategies powered by AI. Takes ~4 minutes.
+          </p>
+
+          {/* CTA */}
+          <Link
+            href="/form"
+            className="inline-flex items-center gap-2.5 h-12 px-8 rounded-xl bg-[#fafafa] text-[#09090b] text-[15px] font-semibold hover:bg-white transition-all duration-200 shadow-[0_0_40px_rgba(255,255,255,0.06)]"
+          >
+            Get Started
+            <ArrowRight className="w-4.5 h-4.5" />
+          </Link>
+
+          {/* trust signals */}
+          <div className="flex items-center justify-center gap-8 mt-14">
+            {[
+              { icon: Shield, text: "Your data stays private" },
+              { icon: Zap, text: "Results in minutes" },
+              { icon: Sparkles, text: "AI-driven insights" },
+            ].map(({ icon: Icon, text }) => (
+              <div
+                key={text}
+                className="flex items-center gap-2 text-[12px] text-[#52525b]"
+              >
+                <Icon className="w-3.5 h-3.5" />
+                {text}
+              </div>
+            ))}
+          </div>
         </div>
       </main>
     </div>

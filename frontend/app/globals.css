@@ -1,26 +1,230 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+@custom-variant dark (&:is(.dark *));
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
+  --font-sans: var(--font-inter);
   --font-mono: var(--font-geist-mono);
+  --font-heading: var(--font-raleway);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+:root {
+  --background: #09090b;
+  --foreground: #fafafa;
+  --card: #141416;
+  --card-foreground: #fafafa;
+  --popover: #141416;
+  --popover-foreground: #fafafa;
+  --primary: #fafafa;
+  --primary-foreground: #09090b;
+  --secondary: #141416;
+  --secondary-foreground: #a1a1aa;
+  --muted: #141416;
+  --muted-foreground: #71717a;
+  --accent: #1e1e21;
+  --accent-foreground: #fafafa;
+  --destructive: #dc2626;
+  --border: #1e1e21;
+  --input: #1e1e21;
+  --ring: #3f3f46;
+  --chart-1: #a1a1aa;
+  --chart-2: #71717a;
+  --chart-3: #52525b;
+  --chart-4: #3f3f46;
+  --chart-5: #27272a;
+  --radius: 0.5rem;
+  --sidebar: #141416;
+  --sidebar-foreground: #fafafa;
+  --sidebar-primary: #fafafa;
+  --sidebar-primary-foreground: #09090b;
+  --sidebar-accent: #1e1e21;
+  --sidebar-accent-foreground: #fafafa;
+  --sidebar-border: #1e1e21;
+  --sidebar-ring: #3f3f46;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #27272a; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #3f3f46; }
+::selection { background: rgba(255, 255, 255, 0.15); }
+
+/* Glassmorphism */
+.glass-card {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+.glass-card-elevated {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* ═══════════════════════════════════════════════════
+   RETAIN — Orbital Background Animations
+   Concentric rings = customers held in orbit
+   ═══════════════════════════════════════════════════ */
+
+/* Orbital ring base */
+.orbit-ring {
+  position: absolute;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+/* ring sizes */
+.orbit-1 { width: 200px; height: 200px; border-color: rgba(255,255,255,0.06); }
+.orbit-2 { width: 380px; height: 380px; border-color: rgba(255,255,255,0.05); }
+.orbit-3 { width: 560px; height: 560px; border-color: rgba(255,255,255,0.04); }
+.orbit-4 { width: 740px; height: 740px; border-color: rgba(255,255,255,0.03); }
+.orbit-5 { width: 920px; height: 920px; border-color: rgba(255,255,255,0.02); }
+
+/* orbiting dots */
+@keyframes orbit-spin {
+  from { transform: translate(-50%, -50%) rotate(0deg); }
+  to { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+.orbit-dot-track {
+  position: absolute;
+  border-radius: 50%;
+  top: 50%;
+  left: 50%;
+  pointer-events: none;
+}
+
+.orbit-dot-track::after {
+  content: '';
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.5);
+  top: -2px;
+  left: 50%;
+  transform: translateX(-50%);
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.3);
+}
+
+/* dot tracks match ring radii (offset by half to sit on the ring) */
+.dot-track-1 { width: 200px; height: 200px; animation: orbit-spin 20s linear infinite; }
+.dot-track-1::after { background: rgba(255,255,255,0.7); width: 5px; height: 5px; top: -2.5px; }
+
+.dot-track-2 { width: 380px; height: 380px; animation: orbit-spin 30s linear infinite reverse; }
+.dot-track-2::after { background: rgba(255,255,255,0.5); }
+
+.dot-track-3 { width: 560px; height: 560px; animation: orbit-spin 40s linear infinite; }
+.dot-track-3::after { background: rgba(255,255,255,0.35); width: 3px; height: 3px; top: -1.5px; }
+
+.dot-track-4 { width: 740px; height: 740px; animation: orbit-spin 55s linear infinite reverse; }
+.dot-track-4::after { background: rgba(255,255,255,0.25); width: 3px; height: 3px; top: -1.5px; }
+
+.dot-track-5 { width: 380px; height: 380px; animation: orbit-spin 25s linear infinite; }
+.dot-track-5::after { background: rgba(255,255,255,0.4); width: 3px; height: 3px; top: auto; bottom: -1.5px; left: 50%; }
+
+.dot-track-6 { width: 560px; height: 560px; animation: orbit-spin 35s linear infinite reverse; }
+.dot-track-6::after { background: rgba(255,255,255,0.3); width: 3px; height: 3px; top: auto; bottom: -1.5px; }
+
+.dot-track-7 { width: 920px; height: 920px; animation: orbit-spin 70s linear infinite; }
+.dot-track-7::after { background: rgba(255,255,255,0.15); width: 2px; height: 2px; top: -1px; }
+
+/* center core pulse */
+@keyframes core-pulse {
+  0%, 100% { box-shadow: 0 0 40px rgba(255,255,255,0.08), 0 0 80px rgba(255,255,255,0.04); }
+  50% { box-shadow: 0 0 60px rgba(255,255,255,0.12), 0 0 120px rgba(255,255,255,0.06); }
+}
+
+.retain-core {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #fafafa;
+  animation: core-pulse 4s ease-in-out infinite;
+  pointer-events: none;
+}
+
+/* connector lines (subtle radial spokes) */
+@keyframes fade-spoke {
+  0%, 100% { opacity: 0.03; }
+  50% { opacity: 0.07; }
+}
+
+.spoke {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 1px;
+  height: 460px;
+  transform-origin: top center;
+  pointer-events: none;
+  animation: fade-spoke 8s ease-in-out infinite;
+}
+
+.spoke::after {
+  content: '';
+  position: absolute;
+  width: 1px;
+  height: 100%;
+  background: linear-gradient(to bottom, rgba(255,255,255,0.15), transparent);
 }
