@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import duckdb
 from app.graph.state import RetentionGraphState
+from app.graph.utils import get_churn_column
 
 
 def behavioral_map_node(state: RetentionGraphState) -> dict:
@@ -61,16 +62,7 @@ def behavioral_map_node(state: RetentionGraphState) -> dict:
                 behavior_curves["churn_probability"] = round(1 - final_retention, 3)
 
         # Create behavioral cohorts with real retention rates from data
-        # Prioritize binary churn columns (is_churned) over Churn_Month/Churn_Reason
-        churn_candidates = [c for c in df.columns if 'churn' in c.lower()]
-        churn_col = None
-        for c in churn_candidates:
-            if df[c].dtype in ['int64', 'float64'] and set(df[c].dropna().unique()).issubset({0, 1, 0.0, 1.0}):
-                churn_col = c
-                break
-        if churn_col is None:
-            # Fall back to any column explicitly named is_churned or churned
-            churn_col = next((c for c in churn_candidates if 'is_churn' in c.lower() or c.lower() == 'churned'), None)
+        churn_col = get_churn_column(df)
         if numeric_cols:
             col_data = df[numeric_cols[0]].dropna()
             if len(col_data) > 0:

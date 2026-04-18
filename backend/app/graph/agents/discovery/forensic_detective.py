@@ -11,7 +11,7 @@ import os
 import re
 import json
 from typing import Any
-from app.graph.utils import extract_llm_text
+from app.graph.utils import extract_llm_text, get_churn_column
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.prompts import ChatPromptTemplate
 from app.graph.state import RetentionGraphState
@@ -29,7 +29,7 @@ def run_forensic_detective(state: RetentionGraphState) -> dict[str, Any]:
         df = conn.execute(f"SELECT * FROM read_csv_auto('{raw_csv_path}')").df()
 
         # Calculate actual statistics from data
-        churn_col = next((c for c in df.columns if 'churn' in c.lower()), None)
+        churn_col = get_churn_column(df)
 
         stats = {"churn_rate": 0, "churn_by_channel": {}, "churn_by_integration": {}}
 
