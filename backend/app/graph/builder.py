@@ -116,7 +116,7 @@ def build_retention_graph() -> StateGraph:
         route_after_retry,
         {
             "input_ingest": "input_ingest",
-            END: END,
+            "feature_engineering": "feature_engineering",
         },
     )
 
@@ -141,8 +141,7 @@ def build_retention_graph() -> StateGraph:
         route_after_hypothesis_validation,
         {
             "constraint_add": "constraint_add",
-            "diagnosis_pod": "behavioral_map",  # loop back → re-fans-out to both discovery agents
-            END: END,
+            "behavioral_map": "behavioral_map",
         },
     )
 
@@ -170,8 +169,7 @@ def build_retention_graph() -> StateGraph:
         route_after_strategy_critic,
         {
             "execution_architect": "execution_architect",
-            "strategy_pod": "adaptive_hitl",        # low lift → re-fans-out to all 3 execution agents
-            "diagnosis_pod": "behavioral_map",       # 3+ failures → re-fans-out to both discovery agents
+            "adaptive_hitl": "adaptive_hitl",
         },
     )
 

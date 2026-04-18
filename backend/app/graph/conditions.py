@@ -16,7 +16,7 @@ from app.graph.state import RetentionGraphState
 
 # ── After Node 2: Data Audit ─────────────────────────────────────────
 DATA_QUALITY_THRESHOLD = 0.5  # Lowered to reduce unnecessary retries
-MAX_RETRIES = 3
+MAX_RETRIES = 2
 
 
 def route_after_data_audit(
@@ -35,46 +35,47 @@ def route_after_data_audit(
 # ── After Retry Handler ──────────────────────────────────────────────
 def route_after_retry(
     state: RetentionGraphState,
-) -> Literal["input_ingest", "__end__"]:
+) -> Literal["input_ingest", "feature_engineering"]:
     """
-    If retry attempts exceeded → end the graph (give up).
+    If retry attempts exceeded → proceed with current data to Feature Engineering.
     Otherwise → loop back to input_ingest for fresh data.
     """
     if state.get("retry_count", 0) >= MAX_RETRIES:
-        return END
+        return "feature_engineering"
     return "input_ingest"
 
 
 # ── After Hypothesis Validation ──────────────────────────────────────
-MAX_DISCOVERY_ATTEMPTS = 3
+MAX_DISCOVERY_ATTEMPTS = 2
 
 
 def route_after_hypothesis_validation(
     state: RetentionGraphState,
-) -> Literal["constraint_add", "diagnosis_pod", "__end__"]:
+) -> Literal["constraint_add", "behavioral_map"]:
     """
     Verified root cause       → proceed to Constraint Add.
-    Unverified / Weak Proof   → loop back to Discovery (fan-out).
-    Attempts >= max           → end graph.
+    Unverified / Weak Proof   → loop back to Discovery (fan-out via behavioral_map).
+    Attempts >= max           → proceed with current data to Constraint Add.
     """
     if state.get("hypothesis_status") == "verified":
         return "constraint_add"
+    # Max retries exhausted — proceed with best available data
     if state.get("discovery_attempts", 0) >= MAX_DISCOVERY_ATTEMPTS:
-        return END
-    return "diagnosis_pod"
+        return "constraint_add"
+    return "behavioral_map"
 
 
 # ── After Strategy Critic ────────────────────────────────────────────
-MAX_CRITIC_ITERATIONS = 3
+MAX_CRITIC_ITERATIONS = 2
 
 
 def route_after_strategy_critic(
     state: RetentionGraphState,
-) -> Literal["execution_architect", "strategy_pod", "diagnosis_pod"]:
+) -> Literal["execution_architect", "adaptive_hitl"]:
     """
     Approved                → proceed to Execution Architect.
-    Low Lift / Violation    → loop back to Execution Agents (fan-out).
-    Failure after 3+ iters  → loop back to Discovery (fan-out).
+    Low Lift / Violation    → loop back to Strategy Agents (fan-out via adaptive_hitl).
+    Max iterations reached  → proceed with current data to Execution Architect.
     """
     verdict = state.get("critic_verdict", "")
     iterations = state.get("iteration_count", 0)
@@ -82,7 +83,9 @@ def route_after_strategy_critic(
     if verdict == "approved":
         return "execution_architect"
 
+    # Max retries exhausted — proceed with best available data
     if iterations >= MAX_CRITIC_ITERATIONS:
-        return "diagnosis_pod"
+        return "execution_architect"
 
-    return "strategy_pod"
+    # Otherwise retry strategy generation
+    return "adaptive_hitl"
