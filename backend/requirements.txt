@@ -49,3 +49,4 @@ bertopic>=0.17.0
 lifelines>=0.30.0
 streamlit>=1.56.0
 google-genai>=0.3.0
+inngest

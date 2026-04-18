@@ -16,7 +16,7 @@ from app.graph.state import RetentionGraphState
 
 # ── After Node 2: Data Audit ─────────────────────────────────────────
 DATA_QUALITY_THRESHOLD = 0.5  # Lowered to reduce unnecessary retries
-MAX_RETRIES = 2
+MAX_RETRIES = 0
 
 
 def route_after_data_audit(
@@ -46,7 +46,7 @@ def route_after_retry(
 
 
 # ── After Hypothesis Validation ──────────────────────────────────────
-MAX_DISCOVERY_ATTEMPTS = 2
+MAX_DISCOVERY_ATTEMPTS = 0
 
 
 def route_after_hypothesis_validation(
@@ -66,7 +66,7 @@ def route_after_hypothesis_validation(
 
 
 # ── After Strategy Critic ────────────────────────────────────────────
-MAX_CRITIC_ITERATIONS = 2
+MAX_CRITIC_ITERATIONS = 0
 
 
 def route_after_strategy_critic(

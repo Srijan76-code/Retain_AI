@@ -1,0 +1,4 @@
+{
+  "raw_csv_path": "data/messy_customers.csv",
+  "questionnaire": {"industry": "SaaS", "size": "100-500"}
+}
