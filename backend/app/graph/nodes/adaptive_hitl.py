@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import os
 import json
+from app.graph.utils import extract_llm_text
 from app.graph.state import RetentionGraphState
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.prompts import ChatPromptTemplate
@@ -50,7 +51,8 @@ def adaptive_hitl_node(state: RetentionGraphState) -> dict:
             size=company_size,
         ))
 
-        hitl_questions = json.loads(response.content)
+        raw_content = extract_llm_text(response.content)
+        hitl_questions = json.loads(raw_content)
         if not isinstance(hitl_questions, list):
             raise ValueError("LLM did not return a list of questions")
 

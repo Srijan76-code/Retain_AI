@@ -51,28 +51,26 @@ def hypothesis_validation_node(state: RetentionGraphState) -> dict:
                     "p_value": round(1 - confidence, 3),
                     "recommendation": "Require additional discovery iterations",
                 })
-                hypothesis_status = "weak_proof"
+                if hypothesis_status != "verified":
+                    hypothesis_status = "weak_proof"
 
-        # If no hypotheses verified, mark as unverified
+        # If no hypotheses could be verified at all, stay unverified
         if not verified_root_causes:
             hypothesis_status = "unverified"
-            # Add default fallback causes
-            verified_root_causes = [
-                {
-                    "cause": "Low feature adoption in first 30 days",
-                    "confidence": 0.55,
-                    "evidence": "Common SaaS churn pattern",
-                    "recommendation": "Investigate onboarding friction",
-                }
-            ]
 
         return {
             "hypothesis_status": hypothesis_status,
             "verified_root_causes": verified_root_causes,
             "validation_metrics": {
                 "hypotheses_tested": len(merged_hypotheses),
-                "hypotheses_verified": len([h for h in verified_root_causes if "Strong" in h.get("evidence", "")]),
-                "validation_quality": round(sum(h.get("robustness", 0) for h in verified_root_causes) / max(1, len(verified_root_causes)), 3),
+                "hypotheses_verified": len([
+                    h for h in verified_root_causes
+                    if h.get("evidence") == "Statistical validation passed"
+                ]),
+                "validation_quality": round(
+                    sum(h.get("robustness", 0) for h in verified_root_causes)
+                    / max(1, len(verified_root_causes)), 3
+                ),
             },
             "current_node": "hypothesis_validation",
         }
@@ -80,13 +78,7 @@ def hypothesis_validation_node(state: RetentionGraphState) -> dict:
     except Exception as e:
         return {
             "hypothesis_status": "unverified",
-            "verified_root_causes": [
-                {
-                    "cause": "Analysis error; using fallback cause",
-                    "confidence": 0.40,
-                    "evidence": "Default pattern",
-                }
-            ],
-            "errors": [*state.get("errors", []), f"Hypothesis validation error: {str(e)}"],
+            "verified_root_causes": [],
+            "errors": [f"Hypothesis validation error: {str(e)}"],
             "current_node": "hypothesis_validation",
         }

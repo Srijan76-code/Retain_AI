@@ -34,14 +34,9 @@ def simulation_node(state: RetentionGraphState) -> dict:
 
     except Exception as e:
         return {
-            "simulations": {
-                "iterations": 10000,
-                "expected_lift": 12.0,
-                "confidence_interval": [8.0, 16.0],
-                "expected_roi": 150.0,
-            },
-            "lift_percent": 12.0,
-            "errors": [*state.get("errors", []), f"Simulation error: {str(e)}"],
+            "simulations": {"error": str(e)},
+            "lift_percent": 0.0,
+            "errors": [f"Simulation error: {str(e)}"],
             "current_node": "simulation",
         }
 

@@ -11,6 +11,7 @@ import os
 import json
 import re
 from typing import Any
+from app.graph.utils import extract_llm_text
 from langchain_groq import ChatGroq
 from langchain_core.prompts import ChatPromptTemplate
 from app.graph.state import RetentionGraphState
@@ -79,7 +80,7 @@ def run_unit_economist(state: RetentionGraphState) -> dict[str, Any]:
             constraints=json.dumps(constrained_brief)
         ))
 
-        content = response.content.strip()
+        content = extract_llm_text(response.content)
         content = re.sub(r'^```(?:json)?\s*', '', content)
         content = re.sub(r'\s*```$', '', content)
         result = json.loads(content)
@@ -92,7 +93,7 @@ def run_unit_economist(state: RetentionGraphState) -> dict[str, Any]:
             "cost_estimates": result.get("cost_estimates", {}),
             "top_roi_intervention": result.get("top_roi_intervention", {}),
             "framework": "Unit Economics / LTV-CAC",
-            "confidence": 0.72,
+            "confidence": _avg_confidence(result.get("proposed_interventions", [])),
         }
 
     except Exception as e:
@@ -100,3 +101,9 @@ def run_unit_economist(state: RetentionGraphState) -> dict[str, Any]:
             "agent": "unit_economist",
             "error": str(e),
         }
+
+
+def _avg_confidence(interventions: list) -> float:
+    """Compute average confidence from LLM-returned interventions."""
+    scores = [i.get("confidence", 0) for i in interventions if isinstance(i, dict)]
+    return round(sum(scores) / len(scores), 3) if scores else 0.0

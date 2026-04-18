@@ -11,6 +11,7 @@ import os
 import json
 import re
 from typing import Any
+from app.graph.utils import extract_llm_text
 from app.graph.state import RetentionGraphState
 from langchain_groq import ChatGroq
 from langchain_core.prompts import ChatPromptTemplate
@@ -63,7 +64,7 @@ def run_jtbd_specialist(state: RetentionGraphState) -> dict[str, Any]:
             constraints=json.dumps(constrained_brief)
         ))
 
-        content = response.content.strip()
+        content = extract_llm_text(response.content)
         content = re.sub(r'^```(?:json)?\s*', '', content)
         content = re.sub(r'\s*```$', '', content)
         result = json.loads(content)
@@ -75,7 +76,7 @@ def run_jtbd_specialist(state: RetentionGraphState) -> dict[str, Any]:
             "proposed_interventions": result.get("proposed_interventions", []),
             "job_priority_ranking": result.get("job_priority_ranking", []),
             "framework": "Jobs-to-be-Done",
-            "confidence": 0.68,
+            "confidence": _avg_confidence(result.get("proposed_interventions", [])),
         }
 
     except Exception as e:
@@ -83,3 +84,9 @@ def run_jtbd_specialist(state: RetentionGraphState) -> dict[str, Any]:
             "agent": "jtbd_specialist",
             "error": str(e),
         }
+
+
+def _avg_confidence(items: list) -> float:
+    """Compute average confidence from LLM-returned items."""
+    scores = [i.get("confidence", 0) for i in items if isinstance(i, dict)]
+    return round(sum(scores) / len(scores), 3) if scores else 0.0

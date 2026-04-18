@@ -11,6 +11,7 @@ from __future__ import annotations
 import os
 import json
 import re
+from app.graph.utils import extract_llm_text
 from datetime import datetime
 
 from langchain_groq import ChatGroq
@@ -199,7 +200,7 @@ Return ONLY a valid JSON object with this exact structure:
             criticism=json.dumps(criticism, indent=2)[:500] if criticism else "No critic feedback",
         ))
 
-        content = response.content.strip()
+        content = extract_llm_text(response.content)
         content = re.sub(r'^```(?:json)?\s*', '', content)
         content = re.sub(r'\s*```$', '', content)
 

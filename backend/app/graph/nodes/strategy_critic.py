@@ -11,6 +11,7 @@ from __future__ import annotations
 import os
 import json
 import re
+from app.graph.utils import extract_llm_text
 
 from app.graph.state import RetentionGraphState
 from langchain_groq import ChatGroq
@@ -79,7 +80,7 @@ Return ONLY a valid JSON object:
             feedback=json.dumps(human_feedback)[:500] if human_feedback else "No human feedback",
         ))
 
-        content = response.content.strip()
+        content = extract_llm_text(response.content)
         content = re.sub(r'^```(?:json)?\s*', '', content)
         content = re.sub(r'\s*```$', '', content)
         evaluation = json.loads(content)

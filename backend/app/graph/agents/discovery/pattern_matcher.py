@@ -10,6 +10,7 @@ from __future__ import annotations
 import os
 import json
 import re
+from app.graph.utils import extract_llm_text
 from typing import Any
 from app.graph.state import RetentionGraphState
 from langchain_google_genai import ChatGoogleGenerativeAI
@@ -23,7 +24,7 @@ def run_pattern_matcher(state: RetentionGraphState) -> dict[str, Any]:
         behavior_cohorts = state.get("behavior_cohorts", [])
 
         llm = ChatGoogleGenerativeAI(
-            model="gemini-2.5-flash",
+            model="gemini-3-flash-preview",
             google_api_key=os.getenv("GOOGLE_API_KEY_2"),
             temperature=0.2,
         )
@@ -62,7 +63,7 @@ def run_pattern_matcher(state: RetentionGraphState) -> dict[str, Any]:
             features=json.dumps(feature_store)
         ))
 
-        content = response.content.strip()
+        content = extract_llm_text(response.content)
         content = re.sub(r'^```(?:json)?\s*', '', content)
         content = re.sub(r'\s*```$', '', content)
 

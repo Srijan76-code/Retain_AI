@@ -12,6 +12,7 @@ import os
 import json
 import re
 from typing import Any
+from app.graph.utils import extract_llm_text
 from app.graph.state import RetentionGraphState
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.prompts import ChatPromptTemplate
@@ -71,7 +72,7 @@ Return as JSON:
             patterns=json.dumps([p.get("pattern", "") for p in pattern_found[:5]]),
         ))
 
-        content = response.content.strip()
+        content = extract_llm_text(response.content)
         content = re.sub(r'^```(?:json)?\s*', '', content)
         content = re.sub(r'\s*```$', '', content)
 

@@ -60,39 +60,51 @@ def behavioral_map_node(state: RetentionGraphState) -> dict:
                 final_retention = retention_rates[-1] if retention_rates else 1.0
                 behavior_curves["churn_probability"] = round(1 - final_retention, 3)
 
-        # Create behavioral cohorts (e.g., low/medium/high engagement)
+        # Create behavioral cohorts with real retention rates from data
+        # Prioritize binary churn columns (is_churned) over Churn_Month/Churn_Reason
+        churn_candidates = [c for c in df.columns if 'churn' in c.lower()]
+        churn_col = None
+        for c in churn_candidates:
+            if df[c].dtype in ['int64', 'float64'] and set(df[c].dropna().unique()).issubset({0, 1, 0.0, 1.0}):
+                churn_col = c
+                break
+        if churn_col is None:
+            # Fall back to any column explicitly named is_churned or churned
+            churn_col = next((c for c in churn_candidates if 'is_churn' in c.lower() or c.lower() == 'churned'), None)
         if numeric_cols:
             col_data = df[numeric_cols[0]].dropna()
             if len(col_data) > 0:
                 quantile_25 = col_data.quantile(0.25)
                 quantile_75 = col_data.quantile(0.75)
 
-                # Low engagement cohort
-                low_count = (col_data < quantile_25).sum()
-                behavior_cohorts.append({
-                    "cohort_id": "low_engagement",
-                    "size": int(low_count),
-                    "retention_rate": 0.4,
-                    "characteristics": "Low activity, high churn risk",
-                })
+                # Calculate actual retention per cohort using churn data
+                low_mask = col_data < quantile_25
+                med_mask = (col_data >= quantile_25) & (col_data < quantile_75)
+                high_mask = col_data >= quantile_75
 
-                # Medium engagement cohort
-                med_count = ((col_data >= quantile_25) & (col_data < quantile_75)).sum()
-                behavior_cohorts.append({
-                    "cohort_id": "medium_engagement",
-                    "size": int(med_count),
-                    "retention_rate": 0.7,
-                    "characteristics": "Moderate activity, stable",
-                })
+                for cohort_id, mask, label in [
+                    ("low_engagement", low_mask, "Low activity"),
+                    ("medium_engagement", med_mask, "Moderate activity"),
+                    ("high_engagement", high_mask, "High activity"),
+                ]:
+                    cohort_size = int(mask.sum())
+                    # Calculate real retention rate from churn column if available
+                    if churn_col and cohort_size > 0:
+                        cohort_churn = df.loc[mask.index[mask], churn_col].mean()
+                        retention_rate = round(1.0 - cohort_churn, 3)
+                    else:
+                        retention_rate = None  # No churn data to calculate from
 
-                # High engagement cohort
-                high_count = (col_data >= quantile_75).sum()
-                behavior_cohorts.append({
-                    "cohort_id": "high_engagement",
-                    "size": int(high_count),
-                    "retention_rate": 0.9,
-                    "characteristics": "High activity, loyal users",
-                })
+                    behavior_cohorts.append({
+                        "cohort_id": cohort_id,
+                        "size": cohort_size,
+                        "retention_rate": retention_rate,
+                        "characteristics": label,
+                        "engagement_range": {
+                            "min": round(float(df.loc[mask.index[mask], numeric_cols[0]].min()), 2) if cohort_size > 0 else 0,
+                            "max": round(float(df.loc[mask.index[mask], numeric_cols[0]].max()), 2) if cohort_size > 0 else 0,
+                        },
+                    })
 
         return {
             "behavior_curves": behavior_curves,
@@ -102,13 +114,8 @@ def behavioral_map_node(state: RetentionGraphState) -> dict:
 
     except Exception as e:
         return {
-            "behavior_curves": {
-                "survival_curve": {},
-                "retention_by_period": {},
-                "drop_off_points": [],
-                "churn_probability": 0.5,
-            },
+            "behavior_curves": {"error": str(e)},
             "behavior_cohorts": [],
-            "errors": [*state.get("errors", []), f"Behavioral map error: {str(e)}"],
+            "errors": [f"Behavioral map error: {str(e)}"],
             "current_node": "behavioral_map",
         }

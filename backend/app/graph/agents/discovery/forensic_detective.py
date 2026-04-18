@@ -11,6 +11,7 @@ import os
 import re
 import json
 from typing import Any
+from app.graph.utils import extract_llm_text
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.prompts import ChatPromptTemplate
 from app.graph.state import RetentionGraphState
@@ -49,7 +50,7 @@ def run_forensic_detective(state: RetentionGraphState) -> dict[str, Any]:
 
         # Use Gemini to generate forensic insights
         llm = ChatGoogleGenerativeAI(
-            model="gemini-2.5-flash",
+            model="gemini-3-flash-preview",
             google_api_key=os.getenv("GOOGLE_API_KEY_1"),
             temperature=0.3,
         )
@@ -72,7 +73,7 @@ def run_forensic_detective(state: RetentionGraphState) -> dict[str, Any]:
             churn_by_integration=json.dumps(stats["churn_by_integration"]),
         ))
 
-        content = response.content.strip()
+        content = extract_llm_text(response.content)
         content = re.sub(r'^```(?:json)?\s*', '', content)
         content = re.sub(r'\s*```$', '', content)
 
