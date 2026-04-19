@@ -33,6 +33,10 @@ def diagnosis_pod_node(state: RetentionGraphState) -> dict:
         forensic_conf = forensic_output.get("confidence_scores", {})
 
         # Combine findings
+        forensic_citations = forensic_output.get("citations", {}) or {}
+        retrieved_sources = forensic_output.get("retrieved_sources", []) or []
+        source_lookup = {s["id"]: s["source"] for s in retrieved_sources}
+
         diagnosis_results = {
             "forensic_findings": forensic_output,
             "pattern_findings": pattern_output,
@@ -42,6 +46,10 @@ def diagnosis_pod_node(state: RetentionGraphState) -> dict:
                     "hypothesis": cause,
                     "confidence": forensic_conf.get(cause, 0.5),
                     "supported_by": ["forensic_detective", "pattern_matcher"],
+                    "citations": [
+                        {"id": cid, "source": source_lookup.get(cid, cid)}
+                        for cid in forensic_citations.get(cause, [])
+                    ],
                 }
                 for cause in forensic_causes[:3]
             ],

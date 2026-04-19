@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import {
@@ -35,10 +35,6 @@ interface Cohort {
   retention_rate: number;
 }
 
-interface DropOffPoint {
-  period: number;
-  drop_percent: number;
-}
 
 interface Hypothesis {
   hypothesis: string;
@@ -81,6 +77,26 @@ interface Playbook {
     phase_2_60_days: PhaseSummary;
     phase_3_90_days: PhaseSummary;
   };
+}
+
+/* ───────────────────────────────────────────────────────── */
+/*  Survival curve helpers                                   */
+/* ───────────────────────────────────────────────────────── */
+function parseSurvivalCurve(curve: Record<string, number>): { time: number; survival: number }[] {
+  return Object.entries(curve)
+    .map(([k, v]) => ({ time: parseInt(k.replace(/\D/g, ""), 10), survival: v }))
+    .filter((p) => !isNaN(p.time))
+    .sort((a, b) => a.time - b.time);
+}
+
+function getChurnAtPeriod(points: { time: number; survival: number }[], period: number): number {
+  if (points.length === 0) return 0;
+  let entry = points[0];
+  for (const p of points) {
+    if (p.time <= period) entry = p;
+    else break;
+  }
+  return Math.round((1 - entry.survival) * 1000) / 10;
 }
 
 /* ───────────────────────────────────────────────────────── */
@@ -163,8 +179,10 @@ export default function ResultsPage() {
   const [isRerunning, setIsRerunning] = useState(false);
   const [expandedFix, setExpandedFix] = useState<number | null>(null);
   const [showDeep, setShowDeep] = useState(false);
+  const [tenureSlider, setTenureSlider] = useState<number>(0);
 
   /* SSE streaming */
+  const sseRef = useRef<EventSource | null>(null);
   useEffect(() => {
     if (!jobId) return;
 
@@ -180,7 +198,13 @@ export default function ResultsPage() {
       } catch { }
     }
 
+    // Prevent duplicate SSE connections (React Strict Mode double-mount)
+    if (sseRef.current) {
+      sseRef.current.close();
+    }
+
     const sse = new EventSource(`http://localhost:8000/analyze/stream/${jobId}`);
+    sseRef.current = sse;
 
     sse.onopen = () => setConnectionStatus("connected");
 
@@ -198,6 +222,7 @@ export default function ResultsPage() {
         if (event.type === "complete") {
           setConnectionStatus("complete");
           sse.close();
+          sseRef.current = null;
         }
       } catch (err) {
         console.error("SSE parse error:", err);
@@ -206,11 +231,21 @@ export default function ResultsPage() {
 
     sse.onerror = () => {
       sse.close();
+      sseRef.current = null;
       setConnectionStatus("error");
     };
 
-    return () => sse.close();
+    return () => {
+      sse.close();
+      sseRef.current = null;
+    };
   }, [jobId]);
+
+  /* Init tenure slider to max_tenure when churn profile arrives */
+  useEffect(() => {
+    const max = stagesData.churn_profile_ready?.max_tenure;
+    if (max && tenureSlider === 0) setTenureSlider(max);
+  }, [stagesData.churn_profile_ready]);
 
   /* Rerun */
   const handleRerun = async () => {
@@ -237,7 +272,11 @@ export default function ResultsPage() {
   const risk: RiskData | null = stagesData.risk_ready ?? null;
   const churnProfile = stagesData.churn_profile_ready ?? null;
   const cohorts: Cohort[] = churnProfile?.behavior_cohorts ?? [];
-  const dropOffs: DropOffPoint[] = churnProfile?.drop_off_points ?? [];
+  const survivalPoints = parseSurvivalCurve(churnProfile?.survival_curve ?? {});
+  const maxTenure = churnProfile?.max_tenure ?? 0;
+  const sliderChurnPct = getChurnAtPeriod(survivalPoints, tenureSlider);
+  const medianSurvival: number | null = churnProfile?.median_survival_time ?? null;
+  const milestones: Record<string, number> = churnProfile?.milestone_retention ?? {};
   const hypotheses: Hypothesis[] = stagesData.diagnosis_ready?.merged_hypotheses ?? [];
   const playbook: Playbook | null = stagesData.solution_ready?.final_playbook ?? null;
   const problems: ProblemSolution[] = playbook?.problems_and_solutions?.slice(0, 2) ?? [];
@@ -334,33 +373,64 @@ export default function ResultsPage() {
           <div className="space-y-4">
             {/* Main Probability Card */}
             <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-              <div className="p-4 rounded-xl bg-blue-500/[.03] border border-blue-500/10 sm:col-span-2 flex flex-col justify-between">
+              <div className="p-4 rounded-xl bg-blue-500/[.03] border border-blue-500/10 sm:col-span-2 flex flex-col justify-between gap-4">
                 <div>
                   <p className="text-[10px] uppercase tracking-widest text-blue-400 font-semibold mb-2">Churn Probability</p>
-                  <p className="text-4xl font-bold">{churnProfile?.churn_probability}%</p>
+                  <div className="flex items-end gap-2">
+                    <p className="text-4xl font-bold">{sliderChurnPct}%</p>
+                    <p className="text-sm text-[#71717a] mb-1">by month {tenureSlider}</p>
+                  </div>
                 </div>
-                <p className="text-xs text-[#71717a] mt-4 italic">
-                  Overall probability of churn based on final period survival rates.
-                </p>
+                {maxTenure > 0 && (
+                  <div className="space-y-1">
+                    <input
+                      type="range"
+                      min={1}
+                      max={maxTenure}
+                      value={tenureSlider}
+                      onChange={(e) => setTenureSlider(Number(e.target.value))}
+                      className="w-full accent-blue-500 cursor-pointer"
+                    />
+                    <div className="flex justify-between text-[10px] text-[#52525b]">
+                      <span>Month 1</span>
+                      <span>Month {maxTenure}</span>
+                    </div>
+                  </div>
+                )}
               </div>
 
-              {/* Drop-off points */}
-              <div className="p-4 rounded-xl bg-white/[.02] border border-white/[.06] sm:col-span-2">
-                <p className="text-[10px] uppercase tracking-widest text-[#71717a] mb-3">Critical Drop-offs</p>
-                <div className="space-y-2">
-                  {dropOffs.length > 0 ? (
-                    dropOffs.slice(0, 2).map((d, i) => (
-                      <div key={i} className="flex items-center justify-between text-sm">
-                        <span className="text-[#a1a1aa]">Period {d.period}</span>
-                        <span className="text-red-400 font-mono">-{d.drop_percent}%</span>
-                      </div>
-                    ))
-                  ) : (
-                    <p className="text-xs text-[#52525b]">No major drop-off spikes detected.</p>
-                  )}
-                </div>
+              {/* Median Survival */}
+              <div className="p-4 rounded-xl bg-white/[.02] border border-white/[.06] sm:col-span-2 flex flex-col justify-between">
+                <p className="text-[10px] uppercase tracking-widest text-[#71717a] mb-3">Median Survival</p>
+                {medianSurvival ? (
+                  <>
+                    <p className="text-4xl font-bold">Mo. {medianSurvival}</p>
+                    <p className="text-xs text-[#52525b] mt-4 italic">
+                      Half of your users churn by month {medianSurvival}.
+                    </p>
+                  </>
+                ) : (
+                  <p className="text-xs text-[#52525b]">More than 50% of users are still active at end of observation.</p>
+                )}
               </div>
             </div>
+
+            {/* Milestone Retention Strip */}
+            {Object.keys(milestones).length > 0 && (
+              <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+                {Object.entries(milestones).map(([key, val]) => {
+                  const month = parseInt(key.replace("month_", ""));
+                  const pct = Math.round(val * 100);
+                  const color = pct >= 80 ? "text-emerald-400" : pct >= 60 ? "text-yellow-400" : "text-red-400";
+                  return (
+                    <div key={key} className="p-3 rounded-lg bg-white/[.02] border border-white/[.06] text-center">
+                      <p className="text-[10px] text-[#52525b] mb-1">Mo. {month}</p>
+                      <p className={`text-sm font-semibold ${color}`}>{pct}%</p>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
 
             {/* Cohorts Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">

@@ -8,11 +8,25 @@ import inngest
 import inngest.fast_api
 import asyncio
 import json
+import math
 # import logging
 load_dotenv()
 
 from app.graph.builder import build_retention_graph
 from typing import Dict, Any
+
+
+def _sanitize(obj):
+    """Recursively replace NaN/Infinity with None so the result is valid JSON."""
+    if isinstance(obj, float):
+        if math.isnan(obj) or math.isinf(obj):
+            return None
+        return obj
+    if isinstance(obj, dict):
+        return {k: _sanitize(v) for k, v in obj.items()}
+    if isinstance(obj, (list, tuple)):
+        return [_sanitize(v) for v in obj]
+    return obj
 
 app = FastAPI(title="Retain AI Backend")
 
@@ -37,8 +51,15 @@ inngest_client = inngest.Inngest(
     # Event that triggers this function
     trigger=inngest.TriggerEvent(event="app/analyze"),
 )
-async def analyze_retention_job(ctx: inngest.Context, step: inngest.Step):
-    event_data = ctx.event.data
+async def analyze_retention_job(*args, **kwargs):
+    ctx = kwargs.get('ctx') or (args[0] if len(args) > 0 else None)
+    step = kwargs.get('step') or getattr(ctx, 'step', None)
+    
+    if not step:
+        raise ValueError("Inngest step runner could not be resolved from context or arguments.")
+    
+    event_data = getattr(ctx, 'event', None)
+    event_data = event_data.data if event_data else {}
     
     initial_state = {
         "raw_csv_path": event_data.get("raw_csv_path", ""),
@@ -104,7 +125,10 @@ async def analyze_retention_job(ctx: inngest.Context, step: inngest.Step):
                     "message": "Churn profile and behavior mapping complete.",
                     "data": {
                         "churn_probability": round(curves.get("churn_probability", 0) * 100, 1),
-                        "drop_off_points": curves.get("drop_off_points", []),
+                        "survival_curve": curves.get("survival_curve", {}),
+                        "max_tenure": curves.get("max_tenure", 0),
+                        "median_survival_time": curves.get("median_survival_time"),
+                        "milestone_retention": curves.get("milestone_retention", {}),
                         "behavior_cohorts": state.get("behavior_cohorts", []),
                     }
                 })
@@ -131,7 +155,7 @@ async def analyze_retention_job(ctx: inngest.Context, step: inngest.Step):
         if queue:
             await queue.put({"type": "complete", "message": "Analysis finished.", "data": {}})
             
-        return final_state
+        return _sanitize(final_state)
 
     try:
         # Run async stream invocation within an inngest step

@@ -33,54 +33,68 @@ def feature_engineering_node(state: RetentionGraphState) -> dict:
             "feature_list": [],
         }
 
-        # Detect numeric columns for feature engineering
+
+        # Resolve detected columns from input_ingest state
+        input_context = state.get("input_context", {})
+        detected = input_context.get("detected_columns", {})
         numeric_cols = df.select_dtypes(include=['int64', 'float64']).columns.tolist()
 
-        # 1. RFM Scores (if relevant columns exist)
-        if numeric_cols:
-            for col in numeric_cols[:3]:  # Use first 3 numeric columns as proxy
+        tenure_col = detected.get("tenure") or next((c for c in df.columns if any(x in c.lower() for x in ['month', 'tenure'])), None)
+        usage_col = detected.get("usage") or next((c for c in df.columns if any(x in c.lower() for x in ['login', 'usage'])), None)
+        ltv_col = next((c for c in df.columns if any(x in c.lower() for x in ['ltv', 'revenue', 'monetary', 'value'])), None)
+
+        # 1. RFM Scores using semantically correct columns
+        rfm_map = {"recency": tenure_col, "frequency": usage_col, "monetary": ltv_col}
+        for label, col in rfm_map.items():
+            if col and col in df.columns:
                 try:
-                    col_mean = df[col].mean()
-                    col_std = df[col].std()
+                    col_data = df[col].dropna()
+                    col_std = float(col_data.std())
                     if col_std > 0:
-                        feature_store["rfm_scores"][f"{col}_zscore"] = {
-                            "mean": float(col_mean),
-                            "std": float(col_std),
+                        feature_store["rfm_scores"][f"{label}_zscore"] = {
+                            "column": col,
+                            "mean": round(float(col_data.mean()), 3),
+                            "std": round(col_std, 3),
                         }
                 except:
                     pass
 
-        # 2. Engagement velocity (rate of change)
-        for col in numeric_cols[:2]:
+        # 2. Engagement velocity (avg logins per month vs population mean)
+        if usage_col and usage_col in df.columns:
             try:
-                values = df[col].dropna().values
-                if len(values) > 1:
-                    velocity = (values[-1] - values[0]) / len(values) if len(values) > 0 else 0
-                    feature_store["velocity_metrics"][f"{col}_velocity"] = float(velocity)
+                usage_data = df[usage_col].dropna()
+                feature_store["velocity_metrics"]["avg_logins_per_month"] = round(float(usage_data.mean()), 2)
+                feature_store["velocity_metrics"]["logins_std"] = round(float(usage_data.std()), 2)
+                feature_store["velocity_metrics"]["low_engagement_threshold"] = round(float(usage_data.quantile(0.25)), 2)
             except:
                 pass
 
-        # 3. Simple LTV proxy (if monetary column exists)
-        if numeric_cols:
-            ltv_proxy = df[numeric_cols].sum().sum() / len(df) if len(df) > 0 else 0
-            feature_store["ltv_estimates"]["ltv_proxy"] = float(ltv_proxy)
+        # 3. LTV estimates from actual LTV column
+        if ltv_col and ltv_col in df.columns:
+            try:
+                ltv_data = df[ltv_col].dropna()
+                feature_store["ltv_estimates"]["mean_ltv"] = round(float(ltv_data.mean()), 2)
+                feature_store["ltv_estimates"]["median_ltv"] = round(float(ltv_data.median()), 2)
+                feature_store["ltv_estimates"]["ltv_col"] = ltv_col
+            except:
+                pass
 
-        # 4. Engagement cohorts
-        if numeric_cols:
-            col_percentiles = df[numeric_cols[0]].quantile([0.25, 0.5, 0.75]).to_dict()
-            feature_store["engagement_cohorts"] = {
-                "low": float(col_percentiles.get(0.25, 0)),
-                "medium": float(col_percentiles.get(0.5, 0)),
-                "high": float(col_percentiles.get(0.75, 0)),
-            }
+        # 4. Engagement cohorts split by logins (actual engagement signal)
+        if usage_col and usage_col in df.columns:
+            try:
+                col_percentiles = df[usage_col].quantile([0.25, 0.5, 0.75]).to_dict()
+                feature_store["engagement_cohorts"] = {
+                    "low": float(col_percentiles.get(0.25, 0)),
+                    "medium": float(col_percentiles.get(0.5, 0)),
+                    "high": float(col_percentiles.get(0.75, 0)),
+                    "column": usage_col,
+                }
+            except:
+                pass
 
         # 5. Predictive Churn Modeling (Survival Analysis - CoxPH)
         try:
-            churn_col = get_churn_column(df)
-            
-            # Detect tenure column (Months_Active, Tenure, Time, etc.)
-            tenure_col = next((c for c in df.columns if any(x in c.lower() for x in ['month', 'tenure', 'time', 'duration'])), None)
-            
+            churn_col = detected.get("churn") or get_churn_column(df)       
             if churn_col and tenure_col and numeric_cols:
                 # Ensure churn and tenure are not duplicated in our numeric features list
                 features = [c for c in numeric_cols if c not in [churn_col, tenure_col]]

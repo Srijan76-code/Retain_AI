@@ -166,6 +166,13 @@ Simulations: {simulations}
 
 Based on ALL of the above real data, create a detailed execution playbook.
 
+CRITICAL RULES:
+- Each problem MUST address a DIFFERENT root cause. Do NOT create two problems about the same underlying issue (e.g., "poor onboarding" and "lack of guidance" are the SAME problem — pick one).
+- If multiple root causes overlap, MERGE them into a single problem with a combined solution.
+- Prioritize problems by impact: the problem causing the most churn goes first.
+- Solutions must be SPECIFIC to this company's data, not generic advice like "simplify the UI" or "provide tutorials."
+- Reference actual numbers from the data (churn rates, user counts, revenue impact).
+
 For EACH problem identified, structure it as:
 
 1. **Problem**: What specific problem was discovered (reference the actual root cause)
@@ -293,6 +300,36 @@ Return ONLY a valid JSON object with this exact structure:
         )
 
         playbook = response.model_dump(by_alias=True)
+
+        # ── De-duplicate overlapping problems ────────────────────────────
+        problems = playbook.get("problems_and_solutions", [])
+        if len(problems) > 1:
+            deduped = [problems[0]]
+            for p in problems[1:]:
+                is_duplicate = False
+                p_words = set(p["problem"]["title"].lower().split())
+                for existing in deduped:
+                    existing_words = set(existing["problem"]["title"].lower().split())
+                    # Check word overlap — if >60% similar, it's a duplicate
+                    if len(p_words) > 0 and len(existing_words) > 0:
+                        overlap = len(p_words & existing_words) / min(len(p_words), len(existing_words))
+                        if overlap > 0.6:
+                            is_duplicate = True
+                            break
+                    # Also check if key_actions are >50% identical
+                    p_actions = set(a.lower() for a in p.get("solution", {}).get("key_actions", []))
+                    e_actions = set(a.lower() for a in existing.get("solution", {}).get("key_actions", []))
+                    if len(p_actions) > 0 and len(e_actions) > 0:
+                        action_overlap = len(p_actions & e_actions) / min(len(p_actions), len(e_actions))
+                        if action_overlap > 0.5:
+                            is_duplicate = True
+                            break
+                if not is_duplicate:
+                    deduped.append(p)
+            # Re-number priorities
+            for i, p in enumerate(deduped):
+                p["priority"] = i + 1
+            playbook["problems_and_solutions"] = deduped
 
         # Enrich with metadata
         playbook["created_date"] = datetime.now().isoformat()

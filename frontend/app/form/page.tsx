@@ -146,6 +146,7 @@ export default function FormPage() {
   const [step, setStep] = useState(0);
   const [form, setForm] = useState<FormData>(INITIAL);
   const [submitting, setSubmitting] = useState(false);
+  const submittingRef = useRef(false);
   const router = useRouter();
   const [maxStep, setMaxStep] = useState(0);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -191,6 +192,8 @@ export default function FormPage() {
   const prev = () => { if (step > 0) { setStep(step - 1); scroll0(); } };
 
   const submit = async () => {
+    if (submittingRef.current) return;
+    submittingRef.current = true;
     setSubmitting(true);
     const payload = {
       raw_csv_path: form.csvFile?.name ?? "",
@@ -229,6 +232,7 @@ export default function FormPage() {
       console.error(err);
       toast.error("Failed to submit questionnaire. Please make sure backend is running.");
       setSubmitting(false);
+      submittingRef.current = false;
     }
   };
 

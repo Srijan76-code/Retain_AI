@@ -1,0 +1,20 @@
+# Global OS-specific files
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+Network\ Trash\ Folder
+Temporary\ Items
+.apdisk
+
+# Development tools
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Global Environment files (as a safety net)
+.env
+.env.local
+.env.*.local

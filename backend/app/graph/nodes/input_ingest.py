@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import duckdb
 from app.graph.state import RetentionGraphState
+from app.graph.utils import get_churn_column
 
 
 def input_ingest_node(state: RetentionGraphState) -> dict:
@@ -31,10 +32,11 @@ def input_ingest_node(state: RetentionGraphState) -> dict:
         cols_lower = {col.lower(): col for col in df.columns}
 
         customer_id_col = next((cols_lower[k] for k in cols_lower if 'id' in k or 'user' in k), None)
-        tenure_col = next((cols_lower[k] for k in cols_lower if 'tenure' in k or 'months' in k), None)
+        tenure_col = next((cols_lower[k] for k in cols_lower if 'tenure' in k or 'months_active' in k or k == 'months'), None)
         usage_col = next((cols_lower[k] for k in cols_lower if 'usage' in k or 'logins' in k), None)
         support_col = next((cols_lower[k] for k in cols_lower if 'support' in k or 'tickets' in k), None)
         plan_col = next((cols_lower[k] for k in cols_lower if 'plan' in k or 'contract' in k), None)
+        churn_col = get_churn_column(df)
 
         input_context = {
             "source": raw_csv_path,
@@ -46,6 +48,7 @@ def input_ingest_node(state: RetentionGraphState) -> dict:
                 "usage": usage_col,
                 "support": support_col,
                 "plan": plan_col,
+                "churn": churn_col,
             },
             "business_context": questionnaire.get("business_context", ""),
             "industry": questionnaire.get("industry", ""),
