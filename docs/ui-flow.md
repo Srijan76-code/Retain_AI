@@ -15,17 +15,18 @@ End-to-end trace from the form submission to the streamed playbook rendering.
 
 | Method | Path | Purpose |
 |---|---|---|
+| `POST` | `/upload` | Stores uploaded CSV in temp dir and returns unique `file_path`. |
 | `POST` | `/analyze` | Queue a new analysis. Returns `{job_id}`. |
 | `GET` | `/analyze/stream/{job_id}` | Server-Sent Events stream of per-node updates. |
 | `GET` | `/` | Health check. |
 
 ## Request payload
 
-The form collects 5 phases of qualitative questions (business context, ICP, monetization, channels, goals). When the user submits, the whole shape plus the CSV path is sent as JSON:
+The form collects 5 phases of qualitative questions (business context, ICP, monetization, channels, goals). When the user submits, the frontend first uploads the CSV via `POST /upload`, retrieves a temporary file path, and then sends the complete JSON payload:
 
 ```json
 {
-  "raw_csv_path": "data/my_file.csv",
+  "raw_csv_path": "a1b2c3d4e5f6.csv",
   "questionnaire": {
     "business_context": "...",
     "industry": "SaaS",
@@ -39,7 +40,7 @@ The form collects 5 phases of qualitative questions (business context, ICP, mone
 }
 ```
 
-The API resolves the CSV path against `backend/data/` in `input_ingest_node`, so `raw_csv_path` can be relative.
+The API resolves the CSV path primarily against `/tmp/retain_ai_uploads/` for cloud deployments, falling back to `backend/data/` for local static files in `input_ingest_node`.
 
 ## Session storage
 
@@ -63,7 +64,9 @@ sequenceDiagram
     participant G as LangGraph
 
     U->>F: Fill form + upload CSV
-    F->>A: POST /analyze
+    F->>A: POST /upload (FormData)
+    A-->>F: { file_path }
+    F->>A: POST /analyze { raw_csv_path, questionnaire }
     A->>A: job_id = uuid4()<br/>active_streams[job_id] = Queue()
     A->>I: inngest.send(event="app/analyze")
     A-->>F: { job_id, status: "queued" }

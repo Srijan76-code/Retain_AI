@@ -177,8 +177,10 @@ sequenceDiagram
     participant I as Inngest
     participant G as LangGraph
 
-    U->>F: Fill 5-phase form + upload CSV
-    F->>A: POST /analyze (questionnaire + csv path)
+    U->>F: Fill 5-phase form + attach CSV
+    F->>A: POST /upload (FormData)
+    A-->>F: { file_path }
+    F->>A: POST /analyze (questionnaire + file_path)
     A->>A: create job_id, queue asyncio.Queue
     A->>I: send event app/analyze
     A-->>F: { job_id }
@@ -241,7 +243,7 @@ GROQ_API_KEY_3=...
 INNGEST_DEV=1
 ```
 
-Put sample CSVs in `backend/data/` — the form's file upload resolves relative paths against that directory.
+The form handles explicit CSV file uploads to a backend temp directory, but you can also drop sample CSVs directly into `backend/data/` for local testing.
 
 </details>
 
