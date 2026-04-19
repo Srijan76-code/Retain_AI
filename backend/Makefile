@@ -8,7 +8,7 @@ PYTHON_VENV := .venv
 PYTHON_BIN := $(PYTHON_VENV)/bin/python
 UVICORN_BIN := $(PYTHON_VENV)/bin/uvicorn
 APP_MODULE := app.main:app
-PORT := 8000
+PORT ?= 8000
 INNGEST_URL := http://127.0.0.1:$(PORT)/api/inngest
 
 install:
@@ -20,6 +20,9 @@ build: install
 
 fastapi:
 	$(UVICORN_BIN) $(APP_MODULE) --reload --port $(PORT)
+
+start:
+	$(UVICORN_BIN) $(APP_MODULE) --host 0.0.0.0 --port $(PORT)
 
 inngest:
 	npx inngest-cli@latest dev -u $(INNGEST_URL)
