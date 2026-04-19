@@ -198,13 +198,15 @@ export default function FormPage() {
     
     let resolvedCsvPath = form.csvFile?.name ?? "";
     
+    const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+    
     try {
       // 1. Upload file if a new File object is present
       if (form.csvFile) {
         const formData = new FormData();
         formData.append("file", form.csvFile);
         
-        const uploadRes = await fetch("http://localhost:8000/upload", {
+        const uploadRes = await fetch(`${API_BASE}/upload`, {
           method: "POST",
           body: formData,
         });
@@ -239,7 +241,7 @@ export default function FormPage() {
       sessionStorage.setItem("latest_form_payload", JSON.stringify(payload));
       sessionStorage.setItem("latest_form_state", JSON.stringify(form));
       
-      const res = await fetch("http://localhost:8000/analyze", {
+      const res = await fetch(`${API_BASE}/analyze`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),

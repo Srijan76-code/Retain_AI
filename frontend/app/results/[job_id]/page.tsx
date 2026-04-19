@@ -198,12 +198,8 @@ export default function ResultsPage() {
       } catch { }
     }
 
-    // Prevent duplicate SSE connections (React Strict Mode double-mount)
-    if (sseRef.current) {
-      sseRef.current.close();
-    }
-
-    const sse = new EventSource(`http://localhost:8000/analyze/stream/${jobId}`);
+    const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+    const sse = new EventSource(`${API_BASE}/analyze/stream/${jobId}`);
     sseRef.current = sse;
 
     sse.onopen = () => setConnectionStatus("connected");
