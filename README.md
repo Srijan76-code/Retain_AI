@@ -26,15 +26,18 @@ Three things the graph does that aren't visible in the final playbook:
 
 ## Architecture
 
+<details>
+<summary><b>Click to expand Architecture Diagram</b></summary>
+
 ```mermaid
 flowchart TD
-    %% Premium minimalist styling
-    classDef default fill:#09090b,stroke:#52525B,stroke-width:1px,color:#f8fafc,rx:6px,ry:6px;
-    classDef ui fill:#09090b,stroke:#3b82f6,stroke-width:1px,color:#f8fafc,rx:6px,ry:6px;
-    classDef ext fill:#09090b,stroke:#52525B,stroke-width:1px,color:#e4e4e7,stroke-dasharray: 4 4,rx:6px,ry:6px;
-    classDef agent fill:#09090b,stroke:#8b5cf6,stroke-width:1px,color:#f3e8ff,rx:6px,ry:6px;
-    classDef util fill:#09090b,stroke:#10b981,stroke-width:1px,color:#d1fae5,rx:6px,ry:6px;
-    classDef gate fill:#09090b,stroke:#f59e0b,stroke-width:1px,color:#fef3c7,rx:6px,ry:6px;
+    %% Native GitHub theme adaptation
+    classDef default fill:transparent,stroke:#52525B,stroke-width:1px,rx:6px,ry:6px;
+    classDef ui fill:transparent,stroke:#3b82f6,stroke-width:2px,rx:6px,ry:6px;
+    classDef ext fill:transparent,stroke:#8b5cf6,stroke-width:2px,stroke-dasharray: 4 4,rx:6px,ry:6px;
+    classDef agent fill:transparent,stroke:#14b8a6,stroke-width:2px,rx:6px,ry:6px;
+    classDef util fill:transparent,stroke:#64748b,stroke-width:2px,rx:6px,ry:6px;
+    classDef gate fill:transparent,stroke:#f59e0b,stroke-width:2px,rx:6px,ry:6px;
 
     UI[Next.js UI<br/>form + results]:::ui -->|POST /analyze| API[FastAPI]:::ext
     API -.->|SSE stream live| UI
@@ -91,26 +94,28 @@ flowchart TD
     FD -.->|RAG query| RAG
 
     %% Interactivity
-    click II href "./docs/nodes/input-ingest.md" "Input Ingest Node"
-    click DA href "./docs/nodes/data-audit.md" "Data Audit Node (Decision Gate)"
-    click RH href "./docs/nodes/retry-handler.md" "Retry Handler Node"
-    click FE href "./docs/nodes/feature-engineering.md" "Feature Engineering Node"
-    click BM href "./docs/nodes/behavioral-map.md" "Behavioral Map Node"
-    click FD href "./docs/nodes/forensic-detective.md" "Forensic Detective Agent"
-    click PM href "./docs/nodes/pattern-matcher.md" "Pattern Matcher Agent"
-    click DM href "./docs/nodes/diagnosis-merge.md" "Diagnosis Merge Node"
-    click HV href "./docs/nodes/hypothesis-validation.md" "Hypothesis Validation Gate"
-    click CA href "./docs/nodes/constraint-add.md" "Constraint Add Node"
-    click HITL href "./docs/nodes/adaptive-hitl.md" "Adaptive HITL Agent"
-    click UE href "./docs/nodes/unit-economist.md" "Unit Economist Agent"
-    click JTBD href "./docs/nodes/jtbd-specialist.md" "JTBD Specialist Agent"
-    click GH href "./docs/nodes/growth-hacker.md" "Growth Hacker Agent"
-    click SM href "./docs/nodes/strategy-merge.md" "Strategy Merge Node"
-    click SIM href "./docs/nodes/simulation.md" "Simulation Node"
-    click SC href "./docs/nodes/strategy-critic.md" "Strategy Critic Agent"
-    click EA href "./docs/nodes/execution-architect.md" "Execution Architect Agent"
-    click RAG href "./docs/rag.md" "RAG Layer Overview"
+    click II "./docs/nodes/input-ingest.md" "Ingest and normalize raw CSV data"
+    click DA "./docs/nodes/data-audit.md" "Quality score check for nulls and size"
+    click RH "./docs/nodes/retry-handler.md" "Fallback loops for low-quality data"
+    click FE "./docs/nodes/feature-engineering.md" "Computes RFM, LTV, CoxPH risk model"
+    click BM "./docs/nodes/behavioral-map.md" "Fits Kaplan-Meier survival curves & cohorts"
+    click FD "./docs/nodes/forensic-detective.md" "Investigates root-cause diagnosis using RAG"
+    click PM "./docs/nodes/pattern-matcher.md" "Discovers hidden behavioral segments & sequences"
+    click DM "./docs/nodes/diagnosis-merge.md" "Cross-examines and merges causal hypotheses"
+    click HV "./docs/nodes/hypothesis-validation.md" "Gates weak vs verified hypotheses"
+    click CA "./docs/nodes/constraint-add.md" "Filters feasibility by budget and legal rules"
+    click HITL "./docs/nodes/adaptive-hitl.md" "Requests clarifying answers from the human"
+    click UE "./docs/nodes/unit-economist.md" "Builds ROI and LTV/CAC strategies"
+    click JTBD "./docs/nodes/jtbd-specialist.md" "Builds Jobs-to-be-Done interventions"
+    click GH "./docs/nodes/growth-hacker.md" "Builds AARRR tactics and experiments"
+    click SM "./docs/nodes/strategy-merge.md" "Consolidates and ranks top recommendations"
+    click SIM "./docs/nodes/simulation.md" "Monte Carlo 10k simulations for lift %"
+    click SC "./docs/nodes/strategy-critic.md" "Senior-partner style critique and review"
+    click EA "./docs/nodes/execution-architect.md" "Outputs final 30-60-90 day playbook"
+    click RAG "./docs/rag.md" "Stores and retrieves framework context"
 ```
+
+</details>
 
 Parallel fan-out is native LangGraph: `behavioral_map` emits edges to both discovery nodes; `adaptive_hitl` emits edges to all three strategy nodes. Merge nodes collect the outputs.
 
