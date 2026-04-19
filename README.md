@@ -35,57 +35,59 @@ flowchart TD
     classDef gate fill:#d97706,stroke:#78350f,stroke-width:2px,color:#fff,rx:8px,ry:8px;
 
     UI[Next.js UI<br/>form + results]:::ui -->|POST /analyze| API[FastAPI]:::ext
-    API -->|Inngest event<br/>app/analyze| JOB[analyze_retention_job]:::ext
-    UI -.->|SSE stream live| API
-    JOB --> G
+    API -.->|SSE stream live| UI
+    API -->|Inngest event| JOB[analyze_retention_job]:::ext
+    JOB --> II
 
     subgraph G [LangGraph Pipeline]
-        direction TB
         II[input_ingest]:::util --> DA{data_audit}:::gate
+        
+        %% Main branch
         DA -->|score ≥ 0.5| FE[feature_engineering]:::util
+        
+        %% Side branch
         DA -.->|score &lt; 0.5| RH[retry_handler]:::util
         RH -.-> FE
-        RH -.-> II
+        
         FE --> BM[behavioral_map]:::util
         
         subgraph Discovery [Discovery Pod]
-            direction LR
             FD[forensic_detective]:::agent
             PM[pattern_matcher]:::agent
         end
         
-        BM --> FD
-        BM --> PM
-        FD --> DM[diagnosis_merge]:::gate
-        PM --> DM
+        BM --> FD & PM
+        FD & PM --> DM[diagnosis_merge]:::gate
+        
         DM --> HV{hypothesis_validation}:::gate
         HV -->|verified| CA[constraint_add]:::util
-        HV -.->|weak| BM
+        
         CA --> HITL[adaptive_hitl]:::agent
         
         subgraph Strategy [Strategy Pod]
-            direction LR
             UE[unit_economist]:::agent
             JTBD[jtbd_specialist]:::agent
             GH[growth_hacker]:::agent
         end
         
-        HITL --> UE
-        HITL --> JTBD
-        HITL --> GH
-        UE --> SM[strategy_merge]:::gate
-        JTBD --> SM
-        GH --> SM
+        HITL --> UE & JTBD & GH
+        UE & JTBD & GH --> SM[strategy_merge]:::gate
         
         SM --> SIM[simulation]:::util
         SIM --> SC[strategy_critic]:::agent
         SC -->|approved| EA[execution_architect]:::agent
-        SC -.->|low_lift/violation| HITL
         EA --> END([END]):::util
+        
+        %% Loops (placed at end to keep DAG rank aligned)
+        RH -.->|loop| II
+        HV -.->|weak| BM
+        SC -.->|low_lift/violation| HITL
     end
 
-    FD -.->|RAG query| RAG[(Chroma<br/>vector DB)]:::ext
+    RAG[(Chroma<br/>vector DB)]:::ext
+    FD -.->|RAG query| RAG
 
+    %% Interactivity
     click II href "./docs/nodes/input-ingest.md" "Input Ingest Node"
     click DA href "./docs/nodes/data-audit.md" "Data Audit Node (Decision Gate)"
     click RH href "./docs/nodes/retry-handler.md" "Retry Handler Node"
