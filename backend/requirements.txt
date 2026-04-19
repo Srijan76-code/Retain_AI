@@ -39,15 +39,10 @@ typing_extensions
 urllib3
 uuid_utils
 numpy
-scipy
 pandas
 duckdb
 langchain-google-genai
-scikit-learn
-shap
-bertopic
 lifelines
-streamlit
 google-genai
 inngest
 uvicorn>=0.15.0
