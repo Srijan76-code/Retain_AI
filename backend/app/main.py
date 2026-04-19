@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Body, HTTPException, Request
+from fastapi import FastAPI, Body, HTTPException, Request, UploadFile, File
 from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
@@ -9,11 +9,17 @@ import inngest.fast_api
 import asyncio
 import json
 import math
-# import logging
+import os
+import shutil
+import tempfile
+
 load_dotenv()
 
 from app.graph.builder import build_retention_graph
 from typing import Dict, Any
+
+UPLOAD_DIR = os.path.join(tempfile.gettempdir(), "retain_ai_uploads")
+os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 
 def _sanitize(obj):
@@ -171,6 +177,20 @@ graph = build_retention_graph()
 @app.get("/")
 async def root():
     return {"message": "Retain AI Backend running"}
+
+@app.post("/upload")
+async def upload_file(file: UploadFile = File(...)):
+    try:
+        file_extension = os.path.splitext(file.filename)[1]
+        temp_filename = f"{uuid.uuid4().hex}{file_extension}"
+        temp_filepath = os.path.join(UPLOAD_DIR, temp_filename)
+        
+        with open(temp_filepath, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+            
+        return {"status": "success", "file_path": temp_filename, "original_name": file.filename}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Upload failed: {str(e)}")
 
 @app.post("/analyze")
 async def run_analysis(

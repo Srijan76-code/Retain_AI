@@ -14,6 +14,9 @@ INNGEST_URL := http://127.0.0.1:$(PORT)/api/inngest
 install:
 	python3 -m venv $(PYTHON_VENV)
 	$(PYTHON_VENV)/bin/pip install -r requirements.txt
+	$(PYTHON_BIN) -m app.rag.ingest
+
+build: install
 
 fastapi:
 	$(UVICORN_BIN) $(APP_MODULE) --reload --port $(PORT)

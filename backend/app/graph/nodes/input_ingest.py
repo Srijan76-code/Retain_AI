@@ -18,9 +18,21 @@ def input_ingest_node(state: RetentionGraphState) -> dict:
     import os
     try:
         raw_csv_path = state.get("raw_csv_path", "")
-        # Resolve path to the backend/data directory
+        
+        # Path resolution: check temp uploads first, then fallback to local data/ folder
         if raw_csv_path and not os.path.isabs(raw_csv_path):
-            raw_csv_path = os.path.join(os.getcwd(), "data", os.path.basename(raw_csv_path))
+            import tempfile
+            basename = os.path.basename(raw_csv_path)
+            
+            upload_path = os.path.join(tempfile.gettempdir(), "retain_ai_uploads", basename)
+            local_data_path = os.path.join(os.getcwd(), "data", basename)
+            
+            if os.path.exists(upload_path):
+                raw_csv_path = upload_path
+            elif os.path.exists(local_data_path):
+                raw_csv_path = local_data_path
+            else:
+                raise FileNotFoundError(f"File '{basename}' not found in uploads or local data.")
 
         questionnaire = state.get("questionnaire", {})
 

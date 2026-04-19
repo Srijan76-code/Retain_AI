@@ -195,42 +195,63 @@ export default function FormPage() {
     if (submittingRef.current) return;
     submittingRef.current = true;
     setSubmitting(true);
-    const payload = {
-      raw_csv_path: form.csvFile?.name ?? "",
-      questionnaire: {
-        business_context: form.businessContext, industry: "", size: "",
-        business_model: form.businessModel, company_stage: form.companyStage,
-        revenue_model: form.revenueModel, time_range: "",
-        product_lines: form.coreFeatures.split(",").map((s) => s.trim()).filter(Boolean),
-        market_segment: form.typicalCustomer, budget: "",
-        legal_constraints: form.pricingFlexibility.includes("None — pricing is locked") ? ["Pricing locked"] : [],
-        churn_definition: form.churnDefinition === "Other" ? form.churnDefinitionOther : form.churnDefinition === "Inactivity" ? `Inactivity (${form.churnInactivityDays} days)` : form.churnDefinition,
-        competitors: form.topCompetitors.split(",").map((s) => s.trim()).filter(Boolean),
-        top_channels: form.topChannels, support_model: form.supportModel,
-        goal: form.topGoal, target_churn_rate: null,
-        priority_segment: form.prioritySegment === "Specific tier or plan" ? form.prioritySegmentOther : form.prioritySegment,
-        edge_cases: form.anythingElse ? [form.anythingElse] : [],
-        pricing_flexibility: form.pricingFlexibility, can_ship_changes: form.canShipChanges,
-        has_completion_point: form.hasCompletionPoint, churn_destination: form.churnDestination,
-        retention_tactics: form.retentionTactics, timeline: form.timeline,
-        typical_customer: form.typicalCustomer,
-      },
-    };
+    
+    let resolvedCsvPath = form.csvFile?.name ?? "";
+    
     try {
+      // 1. Upload file if a new File object is present
+      if (form.csvFile) {
+        const formData = new FormData();
+        formData.append("file", form.csvFile);
+        
+        const uploadRes = await fetch("http://localhost:8000/upload", {
+          method: "POST",
+          body: formData,
+        });
+        
+        if (!uploadRes.ok) throw new Error("Failed to upload CSV file. Please make sure backend is running.");
+        const uploadData = await uploadRes.json();
+        resolvedCsvPath = uploadData.file_path;
+      }
+      
+      const payload = {
+        raw_csv_path: resolvedCsvPath,
+        questionnaire: {
+          business_context: form.businessContext, industry: "", size: "",
+          business_model: form.businessModel, company_stage: form.companyStage,
+          revenue_model: form.revenueModel, time_range: "",
+          product_lines: form.coreFeatures.split(",").map((s) => s.trim()).filter(Boolean),
+          market_segment: form.typicalCustomer, budget: "",
+          legal_constraints: form.pricingFlexibility.includes("None — pricing is locked") ? ["Pricing locked"] : [],
+          churn_definition: form.churnDefinition === "Other" ? form.churnDefinitionOther : form.churnDefinition === "Inactivity" ? `Inactivity (${form.churnInactivityDays} days)` : form.churnDefinition,
+          competitors: form.topCompetitors.split(",").map((s) => s.trim()).filter(Boolean),
+          top_channels: form.topChannels, support_model: form.supportModel,
+          goal: form.topGoal, target_churn_rate: null,
+          priority_segment: form.prioritySegment === "Specific tier or plan" ? form.prioritySegmentOther : form.prioritySegment,
+          edge_cases: form.anythingElse ? [form.anythingElse] : [],
+          pricing_flexibility: form.pricingFlexibility, can_ship_changes: form.canShipChanges,
+          has_completion_point: form.hasCompletionPoint, churn_destination: form.churnDestination,
+          retention_tactics: form.retentionTactics, timeline: form.timeline,
+          typical_customer: form.typicalCustomer,
+        },
+      };
+
       sessionStorage.setItem("latest_form_payload", JSON.stringify(payload));
       sessionStorage.setItem("latest_form_state", JSON.stringify(form));
+      
       const res = await fetch("http://localhost:8000/analyze", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
-      if (!res.ok) throw new Error("Failed to start analysis");
+      if (!res.ok) throw new Error("Failed to start analysis pipeline.");
+      
       const data = await res.json();
       toast.success("Analysis started successfully!");
       router.push(`/results/${data.job_id}`);
     } catch (err) {
       console.error(err);
-      toast.error("Failed to submit questionnaire. Please make sure backend is running.");
+      toast.error(err instanceof Error ? err.message : "Failed to submit questionnaire.");
       setSubmitting(false);
       submittingRef.current = false;
     }
