@@ -98,12 +98,14 @@ async def analyze_retention_job(ctx: inngest.Context, step: inngest.Step):
                 })
 
             elif node == "behavioral_map":
+                curves = state.get("behavior_curves", {})
                 await queue.put({
                     "type": "churn_profile_ready",
                     "message": "Churn profile and behavior mapping complete.",
                     "data": {
+                        "churn_probability": round(curves.get("churn_probability", 0) * 100, 1),
+                        "drop_off_points": curves.get("drop_off_points", []),
                         "behavior_cohorts": state.get("behavior_cohorts", []),
-                        "behavior_curves": state.get("behavior_curves", {}),
                     }
                 })
 

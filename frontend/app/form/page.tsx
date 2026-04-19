@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useCallback } from "react";
+import React, { useState, useRef, useCallback, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Textarea } from "@/components/ui/textarea";
@@ -151,6 +151,21 @@ export default function FormPage() {
   const fileRef = useRef<HTMLInputElement>(null);
   const total = STEPS.length;
 
+  // Load saved state if available
+  useEffect(() => {
+    const saved = sessionStorage.getItem("latest_form_state");
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        // Note: csvFile cannot be serialized, so it will be null and user must re-upload
+        setForm({ ...parsed, csvFile: null });
+        setMaxStep(STEPS.length - 1);
+      } catch (err) {
+        console.error("Failed to load saved form state", err);
+      }
+    }
+  }, []);
+
   const set = useCallback(<K extends keyof FormData>(k: K, v: FormData[K]) => setForm((p) => ({ ...p, [k]: v })), []);
   const toggle = useCallback((k: "pricingFlexibility" | "topChannels" | "retentionTactics", item: string) => {
     setForm((p) => { const a = p[k]; return { ...p, [k]: a.includes(item) ? a.filter((x) => x !== item) : [...a, item] }; });
@@ -200,6 +215,7 @@ export default function FormPage() {
     };
     try {
       sessionStorage.setItem("latest_form_payload", JSON.stringify(payload));
+      sessionStorage.setItem("latest_form_state", JSON.stringify(form));
       const res = await fetch("http://localhost:8000/analyze", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
